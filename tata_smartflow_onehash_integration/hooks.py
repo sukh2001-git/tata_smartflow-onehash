@@ -152,7 +152,12 @@ doctype_js = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
+    "cron": {
+        "*/30 * * * *": [  # Runs every 30 minutes
+            "tata_smartflow_onehash_integration.tata_smartflow_onehash_integration.api.calling_api.fetch_call_records"
+        ]
+    }
 # 	"all": [
 # 		"tata_smartflow_onehash_integration.tasks.all"
 # 	],
@@ -168,7 +173,7 @@ doctype_js = {
 # 	"monthly": [
 # 		"tata_smartflow_onehash_integration.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------

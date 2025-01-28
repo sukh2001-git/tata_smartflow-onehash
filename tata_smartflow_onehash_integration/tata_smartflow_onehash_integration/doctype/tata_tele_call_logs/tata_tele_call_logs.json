@@ -1,0 +1,149 @@
+{
+ "actions": [],
+ "autoname": "field:call_id",
+ "creation": "2025-01-28 09:08:52.150218",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "calling_records_section",
+  "call_id",
+  "call_type",
+  "call_date",
+  "call_time",
+  "last_entry_time",
+  "duration",
+  "column_break_udcs",
+  "agent_name",
+  "customer_number",
+  "status",
+  "recording_url",
+  "campaign_id",
+  "description",
+  "section_break_cyno",
+  "missed_agents",
+  "section_break_sdpg",
+  "hang_up_call_records"
+ ],
+ "fields": [
+  {
+   "fieldname": "call_id",
+   "fieldtype": "Data",
+   "label": "Call ID",
+   "unique": 1
+  },
+  {
+   "fieldname": "call_type",
+   "fieldtype": "Select",
+   "label": "Call Type",
+   "options": "\nInbound\nOutbound"
+  },
+  {
+   "fieldname": "call_date",
+   "fieldtype": "Date",
+   "label": "Call Date"
+  },
+  {
+   "fieldname": "call_time",
+   "fieldtype": "Time",
+   "label": "Call Time"
+  },
+  {
+   "fieldname": "duration",
+   "fieldtype": "Int",
+   "label": "Duration"
+  },
+  {
+   "fieldname": "column_break_udcs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "agent_name",
+   "fieldtype": "Data",
+   "label": "Agent Name"
+  },
+  {
+   "fieldname": "customer_number",
+   "fieldtype": "Data",
+   "label": "Customer Number"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nAnswered\nMissed"
+  },
+  {
+   "fieldname": "recording_url",
+   "fieldtype": "Small Text",
+   "label": "Recording URL"
+  },
+  {
+   "fieldname": "campaign_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Campaign ID"
+  },
+  {
+   "fieldname": "last_entry_time",
+   "fieldtype": "Datetime",
+   "label": "Last Entry Time"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "calling_records_section",
+   "fieldtype": "Section Break",
+   "label": "Calling Records"
+  },
+  {
+   "fieldname": "section_break_sdpg",
+   "fieldtype": "Section Break",
+   "label": "Hang Up Records"
+  },
+  {
+   "fieldname": "hang_up_call_records",
+   "fieldtype": "Table",
+   "label": "Hang Up Call Records",
+   "options": "Hang Up Records"
+  },
+  {
+   "fieldname": "section_break_cyno",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval: doc.call_type == \"Inbound\"",
+   "fieldname": "missed_agents",
+   "fieldtype": "Table",
+   "label": "Missed Agents",
+   "options": "Missed Agents"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-01-28 16:41:01.995783",
+ "modified_by": "Administrator",
+ "module": "Tata Smartflow Onehash Integration",
+ "name": "Tata Tele Call Logs",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
