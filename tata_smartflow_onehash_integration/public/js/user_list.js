@@ -6,27 +6,9 @@ frappe.listview_settings['Tata Tele Users'] = {
             .hide();
 
         // Add the "Fetch Users" button
-        let add_button = listview.page.add_inner_button("Fetch Users", function () {
+        listview.page.add_inner_button("Fetch Users", function () {
             fetch_users(listview);
         });
-
-        $(add_button).css({
-            "color": "white",
-            "background": "black",
-            "border": "1px solid black",
-            // "font-weight": "bold"
-        });
-
-        // let add_button = listview.page.add_inner_button("+Add Tata Tele User", function () {
-        //     add_users(listview);
-        // });
-
-        // $(add_button).css({
-        //     "color": "white",
-        //     "background": "black",
-        //     "border": "1px solid black",
-        //     "font-weight": "bold"
-        // });
 
     }
 };
