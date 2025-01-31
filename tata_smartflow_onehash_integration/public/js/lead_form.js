@@ -8,7 +8,6 @@ frappe.ui.form.on('Lead', {
 
         // Add "Call" custom button
         frm.add_custom_button(__('Call'), function () {
-            frappe.msgprint("Clicked on Call button!");
 
             const phoneNumber = frm.doc.mobile_no || frm.doc.phone || frm.doc.whatsapp_no;
 
@@ -17,29 +16,105 @@ frappe.ui.form.on('Lead', {
                 return;
             }
 
-            // Call the backend API
-            frappe.call({
-                method: "tata_smartflow_onehash_integration.tata_smartflow_onehash_integration.api.calling_api.initiate_call",
-                args: {
-                    docname: frm.doc.name,
+            frappe.prompt([
+                {
+                    fieldname: 'agent_name',
+                    label: __('Agent Name'),
+                    fieldtype: 'Link',
+                    options: 'Tata Tele Users',
+                    reqd: 1
                 },
-                callback: function (response) {
-                    if (response.message) {
-                        frappe.msgprint(__('Call initiated successfully!'));
-                    } else {
-                        frappe.msgprint(__('Failed to initiate the call.'));
-                    }
-                },
-                error: function () {
-                    frappe.msgprint(__('An error occurred while initiating the call.'));
-                }
-            });
+                {
+                    fieldname: 'client_number',
+                    label: __('Client Number'),
+                    fieldtype: 'Data',
+                    default: phoneNumber,
+                    read_only: 1
+                }], function (values) {
+                    frappe.call({
+                        method: "frappe.client.get_value",
+                        args: {
+                            doctype: "Tata Tele Users",
+                            filters: { name: values.agent_name },
+                            fieldname: ["phone_number"]
+                        },
+                        callback: function (response) {
+                            const agentPhoneNumber = response.message.phone_number;
+
+                            if (!agentPhoneNumber) {
+                                frappe.msgprint(__('No phone number found for the selected agent.'));
+                                return;
+                            }
+
+                            // Call the backend API
+                            frappe.call({
+                                method: "tata_smartflow_onehash_integration.tata_smartflow_onehash_integration.api.calling_api.initiate_call",
+                                args: {
+                                    docname: frm.doc.name,
+                                    agent_name: values.agent_name,
+                                    client_phone_number: values.client_number
+                                },
+                                callback: function (response) {
+                                    if (response.message) {
+                                        frappe.show_alert({
+                                            message: __("Call Inititated"),
+                                            indicator: "green"
+                                        });
+                                    } else {
+                                        frappe.show_alert({
+                                            message: __("Failed to initiate call"),
+                                            indicator: "orange"
+                                        });
+                                    }
+                                },
+                                error: function () {
+                                    frappe.show_alert({
+                                        message: __("An error occurred while initiating the call"),
+                                        indicator: "red"
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }, __('Initiate Call'), __('Call Now'));
         });
 
         // Add "Hang up Call" custom button
-        frm.add_custom_button(__('Hang up Call'), function () {
-            frappe.msgprint(__('Hang up button clicked!'));
-
-        });
+        if (frm.doc.call_id) {
+            frm.add_custom_button(__('Hang up Call'), function () {
+                frappe.confirm(
+                    __('Are you sure you want to hang up this call?'),
+                    function() {
+                        // Yes
+                        frappe.call({
+                            method: "tata_smartflow_onehash_integration.tata_smartflow_onehash_integration.api.calling_api.hangup_call",
+                            args: {
+                                docname: frm.doc.name
+                            },
+                            callback: function(response) {
+                                if (response.message && response.message.success) {
+                                    frappe.show_alert({
+                                        message: __("Call hung up successfully"),
+                                        indicator: "green"
+                                    });
+                                    frm.reload_doc(); // Reload to clear call_id
+                                } else {
+                                    frappe.show_alert({
+                                        message: __("Failed to hang up call: " + (response.message.message || "")),
+                                        indicator: "orange"
+                                    });
+                                }
+                            },
+                            error: function() {
+                                frappe.show_alert({
+                                    message: __("An error occurred while hanging up the call"),
+                                    indicator: "red"
+                                });
+                            }
+                        });
+                    }
+                );
+            }, __('Call'));
+        }
     }
 });

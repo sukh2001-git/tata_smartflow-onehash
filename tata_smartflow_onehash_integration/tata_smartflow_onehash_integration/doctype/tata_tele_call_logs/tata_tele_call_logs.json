@@ -111,7 +111,8 @@
   },
   {
    "fieldname": "section_break_cyno",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Agents that missed calls"
   },
   {
    "depends_on": "eval: doc.call_type == \"Inbound\"",
@@ -123,7 +124,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-28 16:41:01.995783",
+ "modified": "2025-01-30 18:27:43.407634",
  "modified_by": "Administrator",
  "module": "Tata Smartflow Onehash Integration",
  "name": "Tata Tele Call Logs",

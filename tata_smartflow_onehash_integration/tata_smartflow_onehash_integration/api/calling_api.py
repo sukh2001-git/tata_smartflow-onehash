@@ -45,6 +45,8 @@ def fetch_call_records():
         response = conn.getresponse()
         response_data = json.loads(response.read().decode("utf-8"))
         
+        frappe.log_error("call response data is", response_data)
+        
         if response.status == 200 and "results" in response_data:
             for call in response_data["results"]:
                 # Create or update call log
@@ -136,83 +138,299 @@ def insert_hangup_records(call_log_name, hangup_data):
         })
     
     call_doc.save()
+    
+    
 
+
+@frappe.whitelist()
+def fetch_users():
+    try:
+        # Get settings from Custom DocType
+        settings = frappe.get_single("Tata Tele API Cloud Settings")
+        if not settings:
+            return {
+                "success": False,
+                "message": "Tata Tele API Cloud Settings not configured correctly"
+            }
+
+        # Get decrypted auth token
+        auth_token = frappe.utils.password.get_decrypted_password(
+            "Tata Tele API Cloud Settings",
+            "Tata Tele API Cloud Settings",
+            "api_token"
+        )
+
+        # Prepare API call
+        base_url = settings.url
+        endpoint = "/v1/users"  
+
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "Authorization": f"Bearer {auth_token}"
+        }
+
+        # Make API call using http.client
+        conn = http.client.HTTPSConnection(base_url)
+        conn.request("GET", endpoint, headers=headers)
+        response = conn.getresponse()
+
+        # Check if the API call was successful
+        if response.status != 200:
+            return {
+                "success": False,
+                "message": f"Failed to fetch users. Status Code: {response.status}, Reason: {response.reason}"
+            }
+
+        # Parse the response data
+        response_data = json.loads(response.read().decode("utf-8"))
+        
+        frappe.log_error("response data", response_data)
+
+        saved_users = []
+        skipped_users = []
+        
+        status_map = {
+            0: "Enabled",
+            1: "Blocked",
+            2: "Disabled"
+        }
+        
+        # Map the API response to the required fields
+        api_users = response_data.get("data", [])
+        
+        if not api_users:
+            return {
+                "success": True,
+                "message": "No users found in the API response",
+                "users": [],
+                "skipped": 0,
+                "saved": 0,
+                "all_existing": False
+            }
+        
+        # Map the API response to the required fields
+        for user in api_users:
+            # Check if user already exists
+            existing_user = frappe.get_all(
+                "Tata Tele Users",
+                filters={"id": user.get("id")},
+                fields=["agent_name", "phone_number"]
+            )
+            
+            if existing_user:
+                # Skip existing users
+                skipped_users.append(user.get("id"))
+                continue
+            
+            agent_data = user.get("agent", {})
+            user_role = user.get("user_role", {})  
+            
+            numeric_status = agent_data.get("status")
+            status_text = status_map.get(numeric_status)
+            
+            # Prepare user data for new users
+            user_data = {
+                "doctype": "Tata Tele Users",
+                "id": user.get("id"),
+                "agent_name": agent_data.get("name"),
+                "phone_number": agent_data.get("follow_me_number"),
+                "login_id": user.get("login_id"),
+                "status": status_text,
+                "role": user_role.get("name"),
+                "login_based_calling_enabled": user.get("is_login_based_calling_enabled"),
+                "international_outbound_enabled": user.get("is_international_outbound_enabled"),
+                "agent_number": agent_data.get("id")
+            }
+            
+            try:
+                # Create new user
+                doc = frappe.get_doc(user_data)
+                doc.insert()
+                
+                saved_users.append({
+                    "id": user.get("id"),
+                    "agent_name": agent_data.get("name"),
+                    "phone_number": agent_data.get("follow_me_number"),
+                    "login_id": user.get("login_id"),
+                    "status": status_text,
+                    "role": user_role.get("name"),
+                    "login_based_calling_enabled": user.get("is_login_based_calling_enabled"),
+                    "international_outbound_enabled": user.get("is_international_outbound_enabled"),
+                    "agent_number": agent_data.get("id")
+                })
+            except Exception as e:
+                frappe.log_error(
+                    frappe.get_traceback(),
+                    f"Failed to save user {user.get('id')}"
+                )
+        
+        # Check if all users were skipped (all existing)
+        all_existing = len(skipped_users) == len(api_users)
+        
+        # Return the fetched users with additional context
+        return {
+            "success": True,
+            "users": saved_users,
+            "skipped": len(skipped_users),
+            "saved": len(saved_users),
+            "all_existing": all_existing,
+            "message": "All users already exist in the system" if all_existing else None
+        }
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), _("Failed to fetch users"))
+        return {
+            "success": False,
+            "message": f"An error occurred: {str(e)}"
+        }
+        
 # @frappe.whitelist()
-# def hangup_call(call_id):
+# def add_user():
 #     try:
-#         # Get settings
-#         settings = frappe.get_single("Smartflo Settings")
-#         if not settings:
-#             return {
-#                 "success": False,
-#                 "message": "Smartflo settings not configured"
-#             }
-            
-#         auth_token = frappe.utils.password.get_decrypted_password(
-#             "Smartflo Settings",
-#             "Smartflo Settings",
-#             "auth_token"
-#         )
-        
-#         # Prepare API call
-#         base_url = "api-smartflo.tatateleservices.com"
-#         endpoint = "/v1/hangup_call"
-        
-#         headers = {
-#             "accept": "application/json",
-#             "content-type": "application/json",
-#             "Authorization": f"Bearer {auth_token}"
-#         }
-        
-#         payload = {
-#             "call_id": call_id
-#         }
-        
-#         # Make API call using http.client
-#         conn = http.client.HTTPSConnection(base_url)
-#         conn.request(
-#             "POST",
-#             endpoint,
-#             body=json.dumps(payload),
-#             headers=headers
-#         )
-        
-#         response = conn.getresponse()
-#         response_data = json.loads(response.read().decode("utf-8"))
-        
-#         if response.status == 200:
-#             # Update Call Log
-#             call_logs = frappe.get_all(
-#                 "Call Log",
-#                 filters={
-#                     "call_id": call_id,
-#                     "status": "In Progress"
-#                 },
-#                 limit=1
-#             )
-            
-#             if call_logs:
-#                 call_log = frappe.get_doc("Call Log", call_logs[0].name)
-#                 call_log.status = "Completed"
-#                 call_log.end_time = now()
-#                 call_log.save(ignore_permissions=True)
-            
-#             return {
-#                 "success": True,
-#                 "message": "Call ended successfully"
-#             }
-#         else:
-#             return {
-#                 "success": False,
-#                 "message": f"Failed to end call: {response_data.get('message', 'Unknown error')}"
-#             }
-            
+#         pass
 #     except Exception as e:
-#         frappe.log_error(f"Hangup Call Error: {str(e)}")
-#         return {
-#             "success": False,
-#             "message": f"Error: {str(e)}"
-#         }
-#     finally:
-#         if 'conn' in locals():
-#             conn.close()
+#         frappe.log_error(frappe.get_traceback(), _("Failed to add user"))
+        
+@frappe.whitelist()
+def initiate_call(docname, agent_name, client_phone_number):
+    try:
+        frappe.log_error("i am heree")
+        # Get settings from Custom DocType
+        settings = frappe.get_single("Tata Tele API Cloud Settings")
+        if not settings:
+            return {
+                "success": False,
+                "message": "Tata Tele API Cloud Settings not configured correctly"
+            }
+            
+        # Prepare API call
+        base_url = settings.url
+        endpoint = "/v1/click_to_call"
+        
+        agent_details = frappe.get_value("Tata Tele Users", 
+            agent_name, 
+            ['id', "agent_number"], 
+            as_dict=1)
+        
+        frappe.log_error("agent detail", agent_details)
+        
+        auth_token = frappe.utils.password.get_decrypted_password(
+            "Tata Tele API Cloud Settings",
+            "Tata Tele API Cloud Settings",
+            "api_token"
+        )
+        
+        frappe.log_error("auth_token", auth_token)
+        
+        # Prepare request payload
+        payload = {
+            "agent_number": agent_details.agent_number,
+            "destination_number": client_phone_number,
+            "caller_id": settings.did_number,  
+            "async": 1,
+            "get_call_id": 1
+        }
+
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "Authorization": auth_token
+        }
+        
+        frappe.log_error("headers", headers)
+
+        # Make API call using http.client
+        conn = http.client.HTTPSConnection(base_url)
+        conn.request(
+            "POST",
+            endpoint,
+            body=json.dumps(payload),
+            headers=headers
+        )
+
+        # Get response
+        response = conn.getresponse()
+        response_data = json.loads(response.read().decode("utf-8"))
+
+        # Log the response for debugging
+        frappe.log_error("response_data", response_data)
+        
+        if response_data.get("success") == True:
+            lead_doc = frappe.get_doc("Lead", docname)
+            frappe.log_error("lead doc", lead_doc)
+            lead_doc.call_id = response_data.get("call_id")
+            lead_doc.save(ignore_permissions=True)
+
+        return {
+            "success": True,
+            "message": "Call initiated successfully",
+        }
+
+    except Exception as e:
+        frappe.logger().error(f"Click to call error: {str(e)}")
+        return {
+            "success": False,
+            "message": f"Failed to initiate call: {str(e)}"
+        }
+        
+@frappe.whitelist()
+def hangup_call(docname):
+    try:
+        # Get the Lead document
+        lead_doc = frappe.get_doc("Lead", docname)
+        
+        # Get settings and make hangup API call
+        settings = frappe.get_single("Tata Tele API Cloud Settings")
+        
+        auth_token = frappe.utils.password.get_decrypted_password(
+            "Tata Tele API Cloud Settings",
+            "Tata Tele API Cloud Settings",
+            "api_token"
+        )
+        base_url = settings.url
+        endpoint = "/v1/hangup_call"  
+        
+        # Prepare hangup request payload
+        payload = {
+            "call_id": lead_doc.call_id
+        }
+        
+        # Make API call to hangup
+        conn = http.client.HTTPSConnection(base_url)
+        conn.request(
+            "POST",
+            endpoint,
+            body=json.dumps(payload),
+            headers={
+                "accept": "application/json",
+                "content-type": "application/json",
+                "Authorization": auth_token
+            }
+        )
+        
+        response = conn.getresponse()
+        response_data = json.loads(response.read().decode("utf-8"))
+        
+        if response_data.get("success") == True:
+            # Clear the call_id field
+            lead_doc.call_id = ""
+            lead_doc.save(ignore_permissions=True)
+            
+            return {
+                "success": True,
+                "message": "Call hung up successfully"
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Failed to hang up call"
+            }
+            
+    except Exception as e:
+        frappe.log_error(f"Hangup call error: {str(e)}")
+        return {
+            "success": False,
+            "message": f"Failed to hang up call: {str(e)}"
+        }
+

@@ -1,0 +1,100 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:agent_name",
+ "creation": "2025-01-29 10:16:16.898904",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "id",
+  "agent_name",
+  "phone_number",
+  "login_based_calling_enabled",
+  "international_outbound_enabled",
+  "column_break_ltzq",
+  "agent_number",
+  "login_id",
+  "status",
+  "role"
+ ],
+ "fields": [
+  {
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "label": "Agent ID"
+  },
+  {
+   "fieldname": "phone_number",
+   "fieldtype": "Data",
+   "label": "Phone Number"
+  },
+  {
+   "fieldname": "column_break_ltzq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "login_id",
+   "fieldtype": "Data",
+   "label": "Login ID"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nEnabled\nBlocked\nDisabled"
+  },
+  {
+   "fieldname": "role",
+   "fieldtype": "Data",
+   "label": "Role"
+  },
+  {
+   "fieldname": "agent_name",
+   "fieldtype": "Data",
+   "label": "Agent Name",
+   "unique": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "login_based_calling_enabled",
+   "fieldtype": "Check",
+   "label": "Login based Calling Enabled"
+  },
+  {
+   "default": "0",
+   "fieldname": "international_outbound_enabled",
+   "fieldtype": "Check",
+   "label": "International Outbound Enabled"
+  },
+  {
+   "fieldname": "agent_number",
+   "fieldtype": "Data",
+   "label": "Agent Number"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-01-30 16:43:47.945008",
+ "modified_by": "Administrator",
+ "module": "Tata Smartflow Onehash Integration",
+ "name": "Tata Tele Users",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

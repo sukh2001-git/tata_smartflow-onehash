@@ -40,11 +40,11 @@ app_license = "mit"
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-# page_js = {"page" : "public/js/file.js"}
+# page_js = {"page" : "public/js/user_list.js"}
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {"Tata Tele Users" : "public/js/user_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -154,7 +154,7 @@ doctype_js = {
 
 scheduler_events = {
     "cron": {
-        "*/30 * * * *": [  # Runs every 30 minutes
+        "*/20 * * * *": [  # Runs every 20 minutes
             "tata_smartflow_onehash_integration.tata_smartflow_onehash_integration.api.calling_api.fetch_call_records"
         ]
     }
