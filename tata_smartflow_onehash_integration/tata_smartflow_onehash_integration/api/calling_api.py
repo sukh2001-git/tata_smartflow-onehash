@@ -569,7 +569,8 @@ def sync_call_records():
                 "agent_name",
                 "call_type",
                 "status",
-                "call_date"
+                "call_date",
+                "call_time",
             ]
         )
         
@@ -590,7 +591,8 @@ def sync_call_records():
                     "agent_name": log.agent_name,
                     "call_type": log.call_type,
                     "status": log.status,
-                    "call_date": log.call_date
+                    "call_date": log.call_date,
+                    "call_time": log.call_time,
                 })
                 lead_doc.save()
                 frappe.db.commit()

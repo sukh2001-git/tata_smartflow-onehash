@@ -80,41 +80,41 @@ frappe.ui.form.on('Lead', {
         });
 
         // Add "Hang up Call" custom button
-        if (frm.doc.call_id) {
-            frm.add_custom_button(__('Hang up Call'), function () {
-                frappe.confirm(
-                    __('Are you sure you want to hang up this call?'),
-                    function() {
-                        // Yes
-                        frappe.call({
-                            method: "tata_smartflow_onehash_integration.tata_smartflow_onehash_integration.api.calling_api.hangup_call",
-                            args: {
-                                docname: frm.doc.name
-                            },
-                            callback: function(response) {
-                                if (response.message && response.message.success) {
-                                    frappe.show_alert({
-                                        message: __("Call hung up successfully"),
-                                        indicator: "green"
-                                    });
-                                    frm.reload_doc(); // Reload to clear call_id
-                                } else {
-                                    frappe.show_alert({
-                                        message: __("Failed to hang up call: " + (response.message.message || "")),
-                                        indicator: "orange"
-                                    });
-                                }
-                            },
-                            error: function() {
-                                frappe.show_alert({
-                                    message: __("An error occurred while hanging up the call"),
-                                    indicator: "red"
-                                });
-                            }
-                        });
-                    }
-                );
-            }, __('Call'));
-        }
+        // if (frm.doc.call_id) {
+        //     frm.add_custom_button(__('Hang up Call'), function () {
+        //         frappe.confirm(
+        //             __('Are you sure you want to hang up this call?'),
+        //             function() {
+        //                 // Yes
+        //                 frappe.call({
+        //                     method: "tata_smartflow_onehash_integration.tata_smartflow_onehash_integration.api.calling_api.hangup_call",
+        //                     args: {
+        //                         docname: frm.doc.name
+        //                     },
+        //                     callback: function(response) {
+        //                         if (response.message && response.message.success) {
+        //                             frappe.show_alert({
+        //                                 message: __("Call hung up successfully"),
+        //                                 indicator: "green"
+        //                             });
+        //                             frm.reload_doc(); // Reload to clear call_id
+        //                         } else {
+        //                             frappe.show_alert({
+        //                                 message: __("Failed to hang up call: " + (response.message.message || "")),
+        //                                 indicator: "orange"
+        //                             });
+        //                         }
+        //                     },
+        //                     error: function() {
+        //                         frappe.show_alert({
+        //                             message: __("An error occurred while hanging up the call"),
+        //                             indicator: "red"
+        //                         });
+        //                     }
+        //                 });
+        //             }
+        //         );
+        //     }, __('Call'));
+        // }
     }
 });
