@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class TataTeleInboundCallDetails(Document):
+class CallingHistory(Document):
 	pass

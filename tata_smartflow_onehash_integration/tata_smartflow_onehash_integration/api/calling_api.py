@@ -79,6 +79,12 @@ def fetch_call_records():
         if 'conn' in locals():
             conn.close()
             
+def format_phone_number(phone_number):
+    """Remove plus sign from phone number if present, keeping country code"""
+    if phone_number.startswith("+"):
+        return phone_number[1:]
+    return phone_number
+            
 # Helping functions for fetch_call_records method       
 def create_call_log(call_data):
     """Create or update call log entry"""
@@ -87,6 +93,8 @@ def create_call_log(call_data):
         filters={"call_id": call_data["call_id"]},
         limit=1
     )
+    
+    formatted_number = format_phone_number(call_data["client_number"])
     
     call_doc = frappe.get_doc({
         "doctype": "Tata Tele Call Logs",
@@ -97,7 +105,7 @@ def create_call_log(call_data):
         "call_time": call_data["time"],
         "last_entry_time": call_data["end_stamp"],
         "duration": call_data["call_duration"],
-        "customer_number": call_data["client_number"],
+        "customer_number": formatted_number,
         "status": call_data["status"].capitalize(),
         "recording_url": call_data.get("recording_url"),
         "description": call_data["description"]
@@ -300,7 +308,7 @@ def initiate_call(docname, agent_name, client_phone_number):
         settings = frappe.get_single("Tata Tele API Cloud Settings")
         if not settings:
             return {
-                "success": False,
+                "success": False,   
                 "message": "Tata Tele API Cloud Settings not configured correctly"
             }
             
@@ -433,4 +441,157 @@ def hangup_call(docname):
             "success": False,
             "message": f"Failed to hang up call: {str(e)}"
         }
+        
+@frappe.whitelist()
+def handle_inbound_call():
+    try:
+        if not frappe.request or not frappe.request.data:
+            frappe.throw(_("No data received"))
+            
+        data = json.loads(frappe.request.data)
+        frappe.log_error("Inbound lead call data", data)
+        
+        # Get settings
+        settings = frappe.get_single("Tata Tele API Cloud Settings")
+        if not settings:
+            frappe.throw(_("Tata Tele API Cloud Settings not configured"))
+        
+        # Find matching lead using get_list
+        leads = frappe.get_list("Lead", 
+            filters={"mobile_no": data.get("caller_id_number")},
+            fields=["name", "first_name", "mobile_no"]
+        )
+        
+        frappe.log_error("leads found", leads)
+        
+        if leads:
+            lead = leads[0]  # Get first matching lead
+            
+            # Send notification with lead info
+            notification_data = {
+                "caller_number": data.get("caller_id_number"),
+                "lead_number": lead.mobile_no,
+                "lead_name": lead.first_name,
+                "lead_id": lead.name 
+            }
+            
+            frappe.log_error("notification data", notification_data)
+            
+            frappe.publish_realtime(
+                event='inbound_call_notification',
+                message=notification_data,
+                user=frappe.session.user
+            )
+            
+            return {
+                "success": True,
+                "message": "Lead call notification sent successfully"
+            }
+        
+        return {
+            "success": False,
+            "message": "No matching lead found"
+        }
+            
+    except Exception as e:
+        frappe.logger().error(f"Inbound lead call error: {str(e)}")
+        return {
+            "success": False,
+            "message": f"Failed to process inbound call: {str(e)}"
+        }
+
+@frappe.whitelist()
+def handle_lead_call_action(action, caller_number, lead=None):
+    """Handle call accept/reject action for leads"""
+    try:
+        # Find the lead based on caller number
+        leads = frappe.get_list("Lead", 
+            filters={"mobile_no": caller_number},
+            fields=["name", "first_name", "mobile_no"]
+        )
+        
+        if not leads:
+            return {
+                "success": False,
+                "message": "No lead found"
+            }
+            
+        lead = leads[0]
+        
+        # Add comment to lead
+        frappe.get_doc("Lead", lead.name).add_comment(
+            "Info",
+            f"Incoming call was {action}ed"
+        )
+        
+        # Send event to stop the notification
+        frappe.publish_realtime(
+            event='stop_call_notification',
+            message={"caller_number": caller_number},
+            user=frappe.session.user
+        )
+        
+        return {
+            "success": True,
+            "message": f"Call {action}ed successfully"
+        }
+            
+    except Exception as e:
+        frappe.logger().error(f"Lead call action error: {str(e)}")
+        return {
+            "success": False,
+            "message": str(e)
+        }       
+        
+        
+def sync_call_records():
+    """
+    Sync call records from Tata Tele Call Logs to Lead's calling history
+    """
+    # Get all leads with mobile numbers
+    leads = frappe.get_all(
+        "Lead",
+        filters={"mobile_no": ["!=", ""]},
+        fields=["name", "mobile_no"]
+    )
+    
+    frappe.log_error("leads are:", leads)
+    
+    for lead in leads:
+        # Search for call records in Tata Tele Call Logs
+        call_logs = frappe.get_all(
+            "Tata Tele Call Logs",
+            filters={
+                "customer_number": lead.mobile_no
+            },
+            fields=[
+                "call_id",
+                "agent_name",
+                "call_type",
+                "status",
+                "call_date"
+            ]
+        )
+        
+        for log in call_logs:
+            # Check if record already exists in calling history
+            existing_record = frappe.get_all(
+                "Calling History",
+                filters={
+                    "call_id": log.call_id,
+                }
+            )
+            
+            if not existing_record:
+                # Create new calling history record
+                lead_doc = frappe.get_doc("Lead", lead.name)
+                lead_doc.append("calling_history", {
+                    "call_id": log.call_id,
+                    "agent_name": log.agent_name,
+                    "call_type": log.call_type,
+                    "status": log.status,
+                    "call_date": log.call_date
+                })
+                lead_doc.save()
+                frappe.db.commit()
 

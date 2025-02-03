@@ -27,6 +27,7 @@ app_license = "mit"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/tata_smartflow_onehash_integration/css/tata_smartflow_onehash_integration.css"
 # app_include_js = "/assets/tata_smartflow_onehash_integration/js/tata_smartflow_onehash_integration.js"
+app_include_js = "/assets/tata_smartflow_onehash_integration/js/call_popup.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/tata_smartflow_onehash_integration/css/tata_smartflow_onehash_integration.css"
@@ -156,7 +157,10 @@ scheduler_events = {
     "cron": {
         "*/20 * * * *": [  # Runs every 20 minutes
             "tata_smartflow_onehash_integration.tata_smartflow_onehash_integration.api.calling_api.fetch_call_records"
-        ]
+        ],
+        "*/10 * * * *": [  # Runs every 10 minutes
+            "tata_smartflow_onehash_integration.tata_smartflow_onehash_integration.api.calling_api.sync_call_records"
+        ],
     }
 # 	"all": [
 # 		"tata_smartflow_onehash_integration.tasks.all"
