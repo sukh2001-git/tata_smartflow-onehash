@@ -629,9 +629,9 @@ def sync_call_records():
                 }
             )
             
+            lead_doc = frappe.get_doc("Lead", lead.name)
+            
             if not existing_record:
-                # Create new calling history record
-                lead_doc = frappe.get_doc("Lead", lead.name)
                 lead_doc.append("calling_history", {
                     "call_id": log.call_id,
                     "agent_name": log.agent_name,
@@ -640,6 +640,20 @@ def sync_call_records():
                     "call_date": log.call_date,
                     "call_time": log.call_time,
                 })
-                lead_doc.save()
-                frappe.db.commit()
+
+            else:
+                # If record exists, update existing record
+                for history_entry in lead_doc.calling_history:
+                    if history_entry.call_id == log.call_id:
+                        history_entry.update({
+                            "agent_name": log.agent_name,
+                            "call_type": log.call_type,
+                            "status": log.status,
+                            "call_date": log.call_date,
+                            "call_time": log.call_time,
+                        })
+                        break
+                
+        lead_doc.save()
+        frappe.db.commit()
 
