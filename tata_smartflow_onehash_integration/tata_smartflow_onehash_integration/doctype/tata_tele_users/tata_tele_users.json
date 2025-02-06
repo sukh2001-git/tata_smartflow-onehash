@@ -8,6 +8,7 @@
  "field_order": [
   "id",
   "agent_name",
+  "role",
   "phone_number",
   "login_based_calling_enabled",
   "international_outbound_enabled",
@@ -15,7 +16,7 @@
   "agent_number",
   "login_id",
   "status",
-  "role"
+  "user"
  ],
  "fields": [
   {
@@ -70,11 +71,17 @@
    "fieldname": "agent_number",
    "fieldtype": "Data",
    "label": "Agent Number"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-30 16:43:47.945008",
+ "modified": "2025-02-06 09:41:34.791172",
  "modified_by": "Administrator",
  "module": "Tata Smartflow Onehash Integration",
  "name": "Tata Tele Users",

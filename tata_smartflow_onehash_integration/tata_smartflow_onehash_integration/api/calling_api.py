@@ -216,6 +216,29 @@ def fetch_users():
                 "saved": 0,
                 "all_existing": False
             }
+            
+        def clean_phone_number(phone):
+            """Clean phone number to get 10 digits only"""
+            if not phone:
+                return None
+            # Remove +91 or 91 prefix and any non-digit characters
+            cleaned = ''.join(filter(str.isdigit, phone))
+            if cleaned.startswith('91') and len(cleaned) > 10:
+                cleaned = cleaned[2:]
+            return cleaned[-10:] if len(cleaned) >= 10 else cleaned
+        
+        
+        def find_erp_user(phone_number):
+            """Find ERP user by mobile number and return email"""
+            if not phone_number:
+                return None
+            user = frappe.get_all(
+                "User",
+                filters={"mobile_no": phone_number},
+                fields=["name"],
+                limit=1
+            )
+            return user[0].name if user else None
         
         # Map the API response to the required fields
         for user in api_users:
@@ -237,19 +260,25 @@ def fetch_users():
             numeric_status = agent_data.get("status")
             status_text = status_map.get(numeric_status)
             
+            clean_phone = clean_phone_number(agent_data.get("follow_me_number"))
+            erp_user = find_erp_user(clean_phone)
+            
             # Prepare user data for new users
             user_data = {
                 "doctype": "Tata Tele Users",
                 "id": user.get("id"),
                 "agent_name": agent_data.get("name"),
-                "phone_number": agent_data.get("follow_me_number"),
+                "phone_number": clean_phone,
                 "login_id": user.get("login_id"),
                 "status": status_text,
                 "role": user_role.get("name"),
                 "login_based_calling_enabled": user.get("is_login_based_calling_enabled"),
                 "international_outbound_enabled": user.get("is_international_outbound_enabled"),
-                "agent_number": agent_data.get("id")
+                "agent_number": agent_data.get("id"),
+                "user": erp_user
             }
+            
+            frappe.log_error("user data", user_data)
             
             try:
                 # Create new user
@@ -259,13 +288,14 @@ def fetch_users():
                 saved_users.append({
                     "id": user.get("id"),
                     "agent_name": agent_data.get("name"),
-                    "phone_number": agent_data.get("follow_me_number"),
+                    "phone_number": clean_phone,
                     "login_id": user.get("login_id"),
                     "status": status_text,
                     "role": user_role.get("name"),
                     "login_based_calling_enabled": user.get("is_login_based_calling_enabled"),
                     "international_outbound_enabled": user.get("is_international_outbound_enabled"),
-                    "agent_number": agent_data.get("id")
+                    "agent_number": agent_data.get("id"),
+                    "erp_user": erp_user
                 })
             except Exception as e:
                 frappe.log_error(
