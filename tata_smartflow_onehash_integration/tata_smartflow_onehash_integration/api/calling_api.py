@@ -84,7 +84,19 @@ def format_phone_number(phone_number):
     if phone_number.startswith("+"):
         return phone_number[1:]
     return phone_number
-            
+
+def format_agent_number(phone_number):
+    if not phone_number:
+        return phone_number
+    
+    phone_number = phone_number.strip()
+    
+    if phone_number.startswith('+91'):
+        phone_number = phone_number[3:]   
+        
+    return phone_number
+        
+             
 # Helping functions for fetch_call_records method       
 def create_call_log(call_data):
     """Create or update call log entry"""
@@ -95,6 +107,7 @@ def create_call_log(call_data):
     )
     
     formatted_number = format_phone_number(call_data["client_number"])
+    formatted_agent_number = format_agent_number(call_data["agent_number"])
     
     call_doc = frappe.get_doc({
         "doctype": "Tata Tele Call Logs",
@@ -108,7 +121,8 @@ def create_call_log(call_data):
         "customer_number": formatted_number,
         "status": call_data["status"].capitalize(),
         "recording_url": call_data.get("recording_url"),
-        "description": call_data["description"]
+        "description": call_data["description"],
+        "agent_phone_number": formatted_agent_number
     })
     
     if existing_log:

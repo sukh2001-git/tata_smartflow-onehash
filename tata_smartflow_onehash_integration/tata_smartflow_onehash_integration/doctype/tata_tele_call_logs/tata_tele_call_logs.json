@@ -12,11 +12,12 @@
   "call_time",
   "last_entry_time",
   "duration",
+  "recording_url",
   "column_break_udcs",
   "agent_name",
+  "agent_phone_number",
   "customer_number",
   "status",
-  "recording_url",
   "campaign_id",
   "description",
   "section_break_cyno",
@@ -120,11 +121,16 @@
    "fieldtype": "Table",
    "label": "Missed Agents",
    "options": "Missed Agents"
+  },
+  {
+   "fieldname": "agent_phone_number",
+   "fieldtype": "Data",
+   "label": "Agent's Phone Number"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-30 18:27:43.407634",
+ "modified": "2025-02-06 16:11:46.570570",
  "modified_by": "Administrator",
  "module": "Tata Smartflow Onehash Integration",
  "name": "Tata Tele Call Logs",
