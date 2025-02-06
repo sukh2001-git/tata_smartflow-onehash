@@ -492,7 +492,6 @@ def handle_inbound_call():
             fields=["name", "first_name", "mobile_no"]
         )
         
-        frappe.log_error("leads found", leads)
         
         if leads:
             lead = leads[0]  # Get first matching lead
@@ -505,7 +504,10 @@ def handle_inbound_call():
                 "lead_id": lead.name 
             }
             
-            frappe.log_error("notification data", notification_data)
+            frappe.get_doc("Lead", lead.name).add_comment(
+                "Info",
+                f"Incoming call received from {data.get('caller_id_number')}"
+            )
             
             frappe.publish_realtime(
                 event='inbound_call_notification',
@@ -530,48 +532,48 @@ def handle_inbound_call():
             "message": f"Failed to process inbound call: {str(e)}"
         }
 
-@frappe.whitelist()
-def handle_lead_call_action(action, caller_number, lead=None):
-    """Handle call accept/reject action for leads"""
-    try:
-        # Find the lead based on caller number
-        leads = frappe.get_list("Lead", 
-            filters={"mobile_no": caller_number},
-            fields=["name", "first_name", "mobile_no"]
-        )
+# @frappe.whitelist()
+# def handle_lead_call_action(action, caller_number, lead=None):
+#     """Handle call accept/reject action for leads"""
+#     try:
+#         # Find the lead based on caller number
+#         leads = frappe.get_list("Lead", 
+#             filters={"mobile_no": caller_number},
+#             fields=["name", "first_name", "mobile_no"]
+#         )
         
-        if not leads:
-            return {
-                "success": False,
-                "message": "No lead found"
-            }
+#         if not leads:
+#             return {
+#                 "success": False,
+#                 "message": "No lead found"
+#             }
             
-        lead = leads[0]
+#         lead = leads[0]
         
-        # Add comment to lead
-        frappe.get_doc("Lead", lead.name).add_comment(
-            "Info",
-            f"Incoming call was {action}ed"
-        )
+#         # Add comment to lead
+#         frappe.get_doc("Lead", lead.name).add_comment(
+#             "Info",
+#             f"Incoming call was {action}ed"
+#         )
         
-        # Send event to stop the notification
-        frappe.publish_realtime(
-            event='stop_call_notification',
-            message={"caller_number": caller_number},
-            user=frappe.session.user
-        )
+#         # Send event to stop the notification
+#         frappe.publish_realtime(
+#             event='stop_call_notification',
+#             message={"caller_number": caller_number},
+#             user=frappe.session.user
+#         )
         
-        return {
-            "success": True,
-            "message": f"Call {action}ed successfully"
-        }
+#         return {
+#             "success": True,
+#             "message": f"Call {action}ed successfully"
+#         }
             
-    except Exception as e:
-        frappe.logger().error(f"Lead call action error: {str(e)}")
-        return {
-            "success": False,
-            "message": str(e)
-        }       
+#     except Exception as e:
+#         frappe.logger().error(f"Lead call action error: {str(e)}")
+#         return {
+#             "success": False,
+#             "message": str(e)
+#         }       
         
         
 def sync_call_records():
