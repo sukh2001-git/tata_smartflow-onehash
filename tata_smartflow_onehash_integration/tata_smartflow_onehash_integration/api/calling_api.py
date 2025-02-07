@@ -138,7 +138,7 @@ def create_call_log(call_data):
             # Set required fields 
             new_lead.first_name = "Missed Call Inbound"
             new_lead.source = "Missed Calls"
-            new_lead.mobile_no = f"91{formatted_number}"
+            new_lead.mobile_no = formatted_number
             
             # Insert the new lead
             new_lead.save(ignore_permissions=True)
