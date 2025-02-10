@@ -45,8 +45,6 @@ def fetch_call_records():
         response = conn.getresponse()
         response_data = json.loads(response.read().decode("utf-8"))
         
-        frappe.log_error("call response data is", response_data)
-        
         if response.status == 200 and "results" in response_data:
             for call in response_data["results"]:
                 # Create or update call log
@@ -147,7 +145,6 @@ def create_call_log(call_data):
                 # Insert the new lead
                 new_lead.save(ignore_permissions=True)
 
-            frappe.log_error(f"Created new lead {new_lead.name} from missed call: {call_doc.call_id}")
         except Exception as e:
             frappe.log_error(f"Error creating lead for missed call {call_doc.call_id}: {str(e)}")
         
@@ -227,7 +224,6 @@ def fetch_users():
         # Parse the response data
         response_data = json.loads(response.read().decode("utf-8"))
         
-        frappe.log_error("response data", response_data)
 
         saved_users = []
         skipped_users = []
@@ -312,8 +308,6 @@ def fetch_users():
                 "user": erp_user
             }
             
-            frappe.log_error("user data", user_data)
-            
             try:
                 # Create new user
                 doc = frappe.get_doc(user_data)
@@ -367,7 +361,6 @@ def fetch_users():
 @frappe.whitelist()
 def initiate_call(docname, agent_name, client_phone_number):
     try:
-        frappe.log_error("i am heree")
         # Get settings from Custom DocType
         settings = frappe.get_single("Tata Tele API Cloud Settings")
         if not settings:
@@ -385,15 +378,11 @@ def initiate_call(docname, agent_name, client_phone_number):
             ['id', "agent_number"], 
             as_dict=1)
         
-        frappe.log_error("agent detail", agent_details)
-        
         auth_token = frappe.utils.password.get_decrypted_password(
             "Tata Tele API Cloud Settings",
             "Tata Tele API Cloud Settings",
             "api_token"
         )
-        
-        frappe.log_error("auth_token", auth_token)
         
         # Prepare request payload
         payload = {
@@ -409,8 +398,6 @@ def initiate_call(docname, agent_name, client_phone_number):
             "content-type": "application/json",
             "Authorization": auth_token
         }
-        
-        frappe.log_error("headers", headers)
 
         # Make API call using http.client
         conn = http.client.HTTPSConnection(base_url)
@@ -424,13 +411,9 @@ def initiate_call(docname, agent_name, client_phone_number):
         # Get response
         response = conn.getresponse()
         response_data = json.loads(response.read().decode("utf-8"))
-
-        # Log the response for debugging
-        frappe.log_error("response_data", response_data)
         
         if response_data.get("success") == True:
             lead_doc = frappe.get_doc("Lead", docname)
-            frappe.log_error("lead doc", lead_doc)
             lead_doc.call_id = response_data.get("call_id")
             lead_doc.save(ignore_permissions=True)
 
@@ -513,7 +496,6 @@ def handle_inbound_call():
             frappe.throw(_("No data received"))
             
         data = json.loads(frappe.request.data)
-        frappe.log_error("Inbound lead call data", data)
         
         # Get settings
         settings = frappe.get_single("Tata Tele API Cloud Settings")
@@ -624,6 +606,7 @@ def sync_call_records():
     frappe.log_error("leads are:", leads)
     
     for lead in leads:
+        lead_doc = frappe.get_doc("Lead", lead.name)
         # Search for call records in Tata Tele Call Logs
         call_logs = frappe.get_all(
             "Tata Tele Call Logs",
@@ -641,6 +624,8 @@ def sync_call_records():
             ]
         )
         
+        updated = False
+        
         for log in call_logs:
             # Check if record already exists in calling history
             existing_record = frappe.get_all(
@@ -650,7 +635,6 @@ def sync_call_records():
                 }
             )
             
-            lead_doc = frappe.get_doc("Lead", lead.name)
             
             if not existing_record:
                 lead_doc.append("calling_history", {
@@ -662,6 +646,8 @@ def sync_call_records():
                     "call_time": log.call_time,
                     "duration": log.duration
                 })
+                
+                updated = True
 
             else:
                 # If record exists, update existing record
@@ -675,8 +661,10 @@ def sync_call_records():
                             "call_time": log.call_time,
                             "duration": log.duration
                         })
+                        updated = True
                         break
                 
-        lead_doc.save()
-        frappe.db.commit()
+        if updated:
+            lead_doc.save()
+            frappe.db.commit()
 
