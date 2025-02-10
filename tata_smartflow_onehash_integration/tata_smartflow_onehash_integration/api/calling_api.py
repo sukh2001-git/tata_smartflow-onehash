@@ -133,16 +133,20 @@ def create_call_log(call_data):
         
     if call_doc.call_type == "Inbound" and call_doc.status == "Missed":
         try:
-            new_lead = frappe.new_doc("Lead")
             
-            # Set required fields 
-            new_lead.first_name = "Missed Call Inbound"
-            new_lead.source = "Missed Calls"
-            new_lead.mobile_no = formatted_number
-            
-            # Insert the new lead
-            new_lead.save(ignore_permissions=True)
-            
+            existing_lead = frappe.db.exists("Lead", {"mobile_no": formatted_number})
+
+            if not existing_lead:
+                new_lead = frappe.new_doc("Lead")
+
+                # Set required fields 
+                new_lead.first_name = "Student"
+                new_lead.source = "Missed Calls"
+                new_lead.mobile_no = formatted_number
+
+                # Insert the new lead
+                new_lead.save(ignore_permissions=True)
+
             frappe.log_error(f"Created new lead {new_lead.name} from missed call: {call_doc.call_id}")
         except Exception as e:
             frappe.log_error(f"Error creating lead for missed call {call_doc.call_id}: {str(e)}")
@@ -633,6 +637,7 @@ def sync_call_records():
                 "status",
                 "call_date",
                 "call_time",
+                "duration"
             ]
         )
         
@@ -655,6 +660,7 @@ def sync_call_records():
                     "status": log.status,
                     "call_date": log.call_date,
                     "call_time": log.call_time,
+                    "duration": log.duration
                 })
 
             else:
@@ -667,6 +673,7 @@ def sync_call_records():
                             "status": log.status,
                             "call_date": log.call_date,
                             "call_time": log.call_time,
+                            "duration": log.duration
                         })
                         break
                 
