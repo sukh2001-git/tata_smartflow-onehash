@@ -603,8 +603,6 @@ def sync_call_records():
         fields=["name", "mobile_no"]
     )
     
-    frappe.log_error("leads are:", leads)
-    
     for lead in leads:
         lead_doc = frappe.get_doc("Lead", lead.name)
         # Search for call records in Tata Tele Call Logs
