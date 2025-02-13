@@ -9,7 +9,6 @@ def webhook_call_handler():
     """Handle incoming webhook data for call records"""
     try:
         call_data = frappe.request.json
-        frappe.log_error("call_data", call_data)
         
         # Basic validation
         if not call_data.get('call_id'):
@@ -20,8 +19,6 @@ def webhook_call_handler():
             
         agent_number = format_agent_number(call_data.get('answered_agent_number', ''))
         customer_number = call_data.get("call_to_number", '').replace('+', '') if call_data.get("call_to_number") else ''
-        
-        frappe.log_error("customer number is", customer_number)
         
         # Create the call log entry
         call_doc = frappe.get_doc({
@@ -51,12 +48,8 @@ def webhook_call_handler():
         else:
             call_doc.insert(ignore_permissions=True)
             
-            # Log call type and status for debugging
-            frappe.log_error(f"Call Type: {call_doc.call_type}, Status: {call_doc.status}")
-            
             # Create lead for missed inbound calls
             if call_doc.call_type == "Inbound" and call_doc.status == "Missed":
-                frappe.log_error(f"Creating lead for missed call - Number: {customer_number}")
                 create_lead_for_missed_call(customer_number)
 
             # Handle missed agents if present
@@ -108,7 +101,6 @@ def create_lead_for_missed_call(phone_number):
                 "mobile_no": phone_number
             })
             new_lead.insert(ignore_permissions=True)
-            frappe.log_error(f"Lead created successfully for number: {phone_number}")
     except Exception as e:
         frappe.log_error(f"Error creating lead for missed call: {str(e)}")
 
@@ -137,7 +129,6 @@ def insert_missed_agents(call_log_name, missed_agents):
             })
         
         call_doc.save()
-        frappe.log_error(f"Missed agents updated for call: {call_log_name}")
     except Exception as e:
         frappe.log_error(f"Error updating missed agents: {str(e)}")
 
@@ -156,9 +147,14 @@ def insert_hangup_records(call_log_name, call_flow):
             })
         
         call_doc.save()
-        frappe.log_error(f"Hangup records updated for call: {call_log_name}")
     except Exception as e:
         frappe.log_error(f"Error updating hangup records: {str(e)}")
+        
+        
+######################################################################################################
+
+#CAN BE USED IF TATA TELE FETCH CALL RECORDS API IS USED
+
 
 # @frappe.whitelist(allow_guest=True)
 # def fetch_call_records():
@@ -333,7 +329,7 @@ def insert_hangup_records(call_log_name, call_flow):
     
 #     call_doc.save()
     
-    
+#####################################################################################################################
 
 
 @frappe.whitelist()
