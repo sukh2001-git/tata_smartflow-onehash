@@ -23,8 +23,6 @@ def webhook_call_handler():
                 "message": "Invalid webhook data: Missing call UUID"
             }
             
-        # Format phone numbers
-        customer_number = format_phone_number(call_data.get('customer_no_with_prefix', ''))
         agent_number = format_agent_number(call_data.get('answered_agent_number', ''))
         
         # Create the call log entry
@@ -40,7 +38,7 @@ def webhook_call_handler():
             "duration": call_data.get('duration'),
             "recording_url": call_data.get('recording_url'),
             "agent_phone_number": agent_number,
-            "customer_number": customer_number,
+            "customer_number": call_data.get("customer_no_with_prefix"),
             "status": get_call_status(call_data),
 
         })
@@ -103,14 +101,14 @@ def create_lead_for_missed_call(phone_number):
     except Exception as e:
         frappe.log_error(f"Error creating lead for missed call: {str(e)}")
 
-# Reuse existing helper functions
-def format_phone_number(phone_number):
-    """Remove plus sign from phone number if present, keeping country code"""
-    if not phone_number:
-        return phone_number
-    if phone_number.startswith("+"):
-        return phone_number[1:]
-    return phone_number
+# # Reuse existing helper functions
+# def format_phone_number(phone_number):
+#     """Remove plus sign from phone number if present, keeping country code"""
+#     if not phone_number:
+#         return phone_number
+#     if phone_number.startswith("+"):
+#         return phone_number[1:]
+#     return phone_number
 
 def format_agent_number(phone_number):
     """Format agent phone number by removing +91 prefix"""
