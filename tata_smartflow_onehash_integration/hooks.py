@@ -155,9 +155,9 @@ doctype_js = {
 
 scheduler_events = {
     "cron": {
-        "*/15 * * * *": [  # Runs every 10 minutes
-            "tata_smartflow_onehash_integration.tata_smartflow_onehash_integration.api.calling_api.fetch_call_records"
-        ],
+        # "*/5 * * * *": [  # Runs every 5 minutes
+        #     "tata_smartflow_onehash_integration.tata_smartflow_onehash_integration.api.calling_api.fetch_call_records"
+        # ],
         "*/10 * * * *": [  # Runs every 10 minutes
             "tata_smartflow_onehash_integration.tata_smartflow_onehash_integration.api.calling_api.sync_call_records"
         ],
