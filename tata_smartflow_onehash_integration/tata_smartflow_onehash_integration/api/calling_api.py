@@ -146,10 +146,12 @@ def insert_hangup_records(call_log_name, call_flow):
         call_doc.hang_up_call_records = []
         
         for flow in call_flow:
-            if flow.get('type') == 'hangup':
-                call_doc.append("hang_up_call_records", {
-                    "hangup_time": flow.get('time')
-                })
+            call_doc.append("hang_up_call_records", {
+                "id": flow.get("id"),
+                "agent_name": flow.get("name"),
+                "disposition": flow.get("dialist"),
+                "hangup_time": flow.get('time')
+            })
         
         call_doc.save()
         frappe.log_error(f"Hangup records updated for call: {call_log_name}")
