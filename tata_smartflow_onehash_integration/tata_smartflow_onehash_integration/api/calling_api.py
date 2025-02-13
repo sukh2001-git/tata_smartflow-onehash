@@ -19,7 +19,9 @@ def webhook_call_handler():
             }
             
         agent_number = format_agent_number(call_data.get('answered_agent_number', ''))
-        customer_number = call_data.get("customer_no_with_prefix", '').replace('+', '') if call_data.get("customer_no_with_prefix") else ''
+        customer_number = call_data.get("call_to_number", '').replace('+', '') if call_data.get("call_to_number") else ''
+        
+        frappe.log_error("customer number is", customer_number)
         
         # Create the call log entry
         call_doc = frappe.get_doc({
