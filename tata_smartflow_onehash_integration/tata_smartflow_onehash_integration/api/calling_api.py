@@ -8,11 +8,11 @@ from frappe.utils import now
 def webhook_call_handler():
     """Handle incoming webhook data for call records"""
     try:
-        # Get the raw data from the webhook request
-        webhook_data = frappe.request.get_data().decode('utf-8')
-        frappe.log_error("webhook data", webhook_data)
+        # # Get the raw data from the webhook request
+        # webhook_data = frappe.request.get_data().decode('utf-8')
+        # frappe.log_error("webhook data", webhook_data)
         
-        call_data = json.loads(webhook_data)
+        call_data = frappe.request.json
         frappe.log_error("call_data", call_data)
         
         
@@ -33,31 +33,16 @@ def webhook_call_handler():
             "call_id": call_data.get('call_id'),
             "uuid": call_data.get('uuid'),
             "agent_name": call_data.get('answered_agent_name'),
-            "call_type": "Inbound" if call_data.get('direction') == "inbound" else "Outbound",
+            "call_type": "Outbound" if call_data.get('direction') == 'clicktocall' else "Inbound",
             "call_date": call_data.get('start_stamp', '').split(' ')[0] if call_data.get('start_stamp') else now(),
             "call_time": call_data.get('start_stamp', '').split(' ')[1] if call_data.get('start_stamp') else now(),
-            "start_stamp": call_data.get('start_stamp'),
-            "answer_stamp": call_data.get('answer_stamp'),
-            "end_stamp": call_data.get('end_stamp'),
+            "last_entry_time": call_data.get('end_stamp'),
             "duration": call_data.get('duration'),
-            "billsec": call_data.get('billsec'),
-            "customer_number": customer_number,
-            "status": get_call_status(call_data),
             "recording_url": call_data.get('recording_url'),
             "agent_phone_number": agent_number,
-            "hangup_cause": call_data.get('hangup_cause'),
-            "digits_dialed": call_data.get('digits_dialed'),
-            "call_flow": call_data.get('call_flow'),
-            "outbound_sec": call_data.get('outbound_sec'),
-            "agent_ring_time": call_data.get('agent_ring_time'),
-            "agent_transfer_ring_time": call_data.get('agent_transfer_ring_time'),
-            "billing_circle": call_data.get('billing_circle'),
-            "call_connected": call_data.get('call_connected'),
-            "aws_call_recording_identifier": call_data.get('aws_call_recording_identifier'),
-            "campaign_name": call_data.get('campaign_name'),
-            "campaign_id": call_data.get('campaign_id'),
-            "customer_ring_time": call_data.get('customer_ring_time'),
-            "reason_key": call_data.get('reason_key')
+            "customer_number": customer_number,
+            "status": get_call_status(call_data),
+
         })
 
         # Check for existing call log
