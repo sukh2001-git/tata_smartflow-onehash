@@ -23,6 +23,7 @@ def webhook_call_handler():
         # Create the call log entry
         call_doc = frappe.get_doc({
             "doctype": "Tata Tele Call Logs",
+            "uuid": call_data.get('uuid'),
             "call_id": call_data.get('call_id'),
             "agent_name": call_data.get('answered_agent_name'),
             "call_type": "Outbound" if call_data.get('direction') == 'clicktocall' else "Inbound",
