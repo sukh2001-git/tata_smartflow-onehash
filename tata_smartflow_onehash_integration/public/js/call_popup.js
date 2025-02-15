@@ -90,7 +90,7 @@ frappe.tatatele.CallPopupHandler = class CallPopupHandler {
         });
 
         this.dialog.show();
-        this.playNotificationSound();
+        // this.playNotificationSound();
     }
 
     playNotificationSound() {
