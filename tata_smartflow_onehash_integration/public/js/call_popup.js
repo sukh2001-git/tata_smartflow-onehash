@@ -90,13 +90,13 @@ frappe.tatatele.CallPopupHandler = class CallPopupHandler {
         });
 
         this.dialog.show();
-        // this.playNotificationSound();
+        this.playNotificationSound();
     }
 
     playNotificationSound() {
         try {
             this.stopNotificationSound(); // Stop any existing sound first
-            this.audio = new Audio('/assets/tata_smartflow_onehash_integration/sounds/telephone.mp3');
+            this.audio = new Audio('/assets/tata_smartflow_onehash_integration/sounds/notification-19-270138.mp3');
             this.audio.loop = true; // Make the sound loop
             this.audio.play();
         } catch (e) {
