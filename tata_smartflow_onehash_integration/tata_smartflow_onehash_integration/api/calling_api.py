@@ -60,7 +60,7 @@ def webhook_call_handler():
             call_doc.insert(ignore_permissions=True)
             
             # Create lead for missed inbound calls
-            if call_doc.call_type == "Inbound" and call_doc.status == "Missed":
+            if call_doc.call_type == "Inbound":
                 create_lead_for_missed_call(customer_number)
 
             # Handle missed agents if present
@@ -169,7 +169,7 @@ def create_lead_for_missed_call(phone_number):
                 "source": "Missed Calls",
                 "mobile_no": phone_number
             })
-            new_lead.insert(ignore_permissions=True)
+            new_lead.save(ignore_permissions=True)
     except Exception as e:
         frappe.log_error(f"Error creating lead for missed call: {str(e)}")
 
