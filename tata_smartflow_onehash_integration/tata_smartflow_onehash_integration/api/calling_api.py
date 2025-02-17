@@ -9,6 +9,7 @@ def webhook_call_handler():
     """Handle incoming webhook data for call records"""
     try:
         call_data = frappe.request.json
+        frappe.call_error(f"Webhook data: {call_data}")
         
         # Basic validation
         if not call_data.get('call_id'):
@@ -19,7 +20,7 @@ def webhook_call_handler():
             
         agent_number = format_agent_number(call_data.get('answered_agent_number', ''))
         # customer_number = call_data.get("call_to_number", '').replace('+', '') if call_data.get("call_to_number") else ''
-        
+
         # Modified customer number logic based on call direction
         if call_data.get('direction') == 'clicktocall':
             # For outbound calls, call_to_number contains the customer number
@@ -34,7 +35,7 @@ def webhook_call_handler():
             if customer_number and not customer_number.startswith('91'):
                 customer_number = '91' + customer_number
 
-        frappe.log_error("Webhook data: customer number", customer_number)
+        # frappe.log_error("Webhook data: customer number", customer_number)
         
         # Create the call log entry
         call_doc = frappe.get_doc({
@@ -750,10 +751,10 @@ def handle_inbound_call():
 
         leads = frappe.get_list("Lead", 
             filters=[
-                ["mobile_no", "=", caller_number],  # Original number
-                ["mobile_no", "=", clean_number],   # Without '+' sign
-                ["mobile_no", "=", last_ten_digits], # Last 10 digits
-                ["mobile_no", "like", f"%{last_ten_digits}"]  # Any format ending with these 10 digits
+                ["mobile_no", "=", caller_number] | 
+                ["mobile_no", "=", clean_number] | 
+                ["mobile_no", "=", last_ten_digits] | 
+                ["mobile_no", "like", f"%{last_ten_digits}"]
             ],
             fields=["name", "first_name", "mobile_no"]
         )
