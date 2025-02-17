@@ -722,13 +722,37 @@ def handle_inbound_call():
         settings = frappe.get_single("Tata Tele API Cloud Settings")
         if not settings:
             frappe.throw(_("Tata Tele API Cloud Settings not configured"))
+
+        caller_number = data.get("caller_id_number", "")
+        if not caller_number:
+            return {"success": False, "message": "No caller ID provided"}
+
+        clean_number = caller_number.strip()
+        if clean_number.startswith("+"):
+            clean_number = clean_number[1:]  
+        
+        last_ten_digits = clean_number[-10:] if len(clean_number) >= 10 else clean_number
+        
+        frappe.log_error("Searching for number patterns", 
+                         f"Original: {caller_number}, Last 10 digits: {last_ten_digits}")
         
         # Find matching lead using get_list
+        # leads = frappe.get_list("Lead", 
+        #     filters={"mobile_no": data.get("caller_id_number")},
+        #     fields=["name", "first_name", "mobile_no"]
+        # )
+
         leads = frappe.get_list("Lead", 
-            filters={"mobile_no": data.get("caller_id_number")},
+            filters=[
+                ["mobile_no", "=", caller_number],  # Original number
+                ["mobile_no", "=", clean_number],   # Without '+' sign
+                ["mobile_no", "=", last_ten_digits], # Last 10 digits
+                ["mobile_no", "like", f"%{last_ten_digits}"]  # Any format ending with these 10 digits
+            ],
             fields=["name", "first_name", "mobile_no"]
         )
         
+        frappe.log_error("Matching leads", leads)
         
         if leads:
             lead = leads[0]  # Get first matching lead
