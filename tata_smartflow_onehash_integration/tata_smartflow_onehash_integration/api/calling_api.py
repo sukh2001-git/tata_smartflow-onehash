@@ -717,7 +717,8 @@ def hangup_call(docname):
             "success": False,
             "message": f"Failed to hang up call: {str(e)}"
         }
-        
+    
+
 @frappe.whitelist()
 def handle_inbound_call():
     try:
@@ -736,6 +737,28 @@ def handle_inbound_call():
         if not caller_number:
             return {"success": False, "message": "No caller ID provided"}
 
+        # Get answer_agent_number from the incoming data
+        answer_agent_number = data.get("answer_agent_number", "")
+        if not answer_agent_number:
+            return {"success": False, "message": "No agent number provided"}
+
+        # Strip the +91 prefix if present to match the format in database
+        clean_agent_number = answer_agent_number
+        if clean_agent_number.startswith("+91"):
+            clean_agent_number = clean_agent_number[3:]  # Remove "+91"
+        
+        # Find the corresponding user in Tata Tele Users doctype
+        tata_tele_users = frappe.get_list("Tata Tele Users", 
+            filters={"phone_number": clean_agent_number},
+            fields=["user"]
+        )
+        
+        if not tata_tele_users:
+            frappe.log_error("Agent notification error", f"No matching Tata Tele User found for agent number {answer_agent_number}")
+            return {"success": False, "message": "No matching Tata Tele User found"}
+        
+        target_user = tata_tele_users[0].user
+        
         clean_number = caller_number.strip()
         if clean_number.startswith("+"):
             clean_number = clean_number[1:]  
@@ -745,12 +768,6 @@ def handle_inbound_call():
         frappe.log_error("Searching for number patterns", 
                          f"Original: {caller_number}, Last 10 digits: {last_ten_digits}")
         
-        # Find matching lead using get_list
-        # leads = frappe.get_list("Lead", 
-        #     filters={"mobile_no": data.get("caller_id_number")},
-        #     fields=["name", "first_name", "mobile_no"]
-        # )
-
         leads = frappe.get_list("Lead", 
             filters=[
                 ["mobile_no", "=", caller_number] | 
@@ -779,10 +796,11 @@ def handle_inbound_call():
                 f"Incoming call received from {data.get('caller_id_number')}"
             )
             
+            # Send the notification only to the specific user
             frappe.publish_realtime(
                 event='inbound_call_notification',
                 message=notification_data,
-                user=frappe.session.user
+                user=target_user
             )
             
             return {
@@ -801,6 +819,92 @@ def handle_inbound_call():
             "success": False,
             "message": f"Failed to process inbound call: {str(e)}"
         }
+        
+# @frappe.whitelist()
+# def handle_inbound_call():
+#     try:
+#         if not frappe.request or not frappe.request.data:
+#             frappe.throw(_("No data received"))
+            
+#         data = json.loads(frappe.request.data)
+#         frappe.log_error("inbound call data", data)
+        
+#         # Get settings
+#         settings = frappe.get_single("Tata Tele API Cloud Settings")
+#         if not settings:
+#             frappe.throw(_("Tata Tele API Cloud Settings not configured"))
+
+#         caller_number = data.get("caller_id_number", "")
+#         if not caller_number:
+#             return {"success": False, "message": "No caller ID provided"}
+
+#         clean_number = caller_number.strip()
+#         if clean_number.startswith("+"):
+#             clean_number = clean_number[1:]  
+        
+#         last_ten_digits = clean_number[-10:] if len(clean_number) >= 10 else clean_number
+        
+#         frappe.log_error("Searching for number patterns", 
+#                          f"Original: {caller_number}, Last 10 digits: {last_ten_digits}")
+        
+#         # Find matching lead using get_list
+#         # leads = frappe.get_list("Lead", 
+#         #     filters={"mobile_no": data.get("caller_id_number")},
+#         #     fields=["name", "first_name", "mobile_no"]
+#         # )
+
+#         leads = frappe.get_list("Lead", 
+#             filters=[
+#                 ["mobile_no", "=", caller_number] | 
+#                 ["mobile_no", "=", clean_number] | 
+#                 ["mobile_no", "=", last_ten_digits] | 
+#                 ["mobile_no", "like", f"%{last_ten_digits}"]
+#             ],
+#             fields=["name", "first_name", "mobile_no"]
+#         )
+        
+#         frappe.log_error("Matching leads", leads)
+        
+#         if leads:
+#             lead = leads[0]  # Get first matching lead
+            
+#             # Send notification with lead info
+#             notification_data = {
+#                 "caller_number": data.get("caller_id_number"),
+#                 "lead_number": lead.mobile_no,
+#                 "lead_name": lead.first_name,
+#                 "lead_id": lead.name 
+#             }
+            
+#             frappe.get_doc("Lead", lead.name).add_comment(
+#                 "Info",
+#                 f"Incoming call received from {data.get('caller_id_number')}"
+#             )
+            
+#             frappe.publish_realtime(
+#                 event='inbound_call_notification',
+#                 message=notification_data,
+#                 user=frappe.session.user
+#             )
+            
+#             return {
+#                 "success": True,
+#                 "message": "Lead call notification sent successfully"
+#             }
+        
+#         return {
+#             "success": False,
+#             "message": "No matching lead found"
+#         }
+            
+#     except Exception as e:
+#         frappe.logger().error(f"Inbound lead call error: {str(e)}")
+#         return {
+#             "success": False,
+#             "message": f"Failed to process inbound call: {str(e)}"
+#         }
+
+############################################################################################################################
 
 # @frappe.whitelist()
 # def handle_lead_call_action(action, caller_number, lead=None):
