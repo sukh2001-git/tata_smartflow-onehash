@@ -125,7 +125,8 @@ def sync_to_lead_history(call_doc):
                         "status": call_doc.status,
                         "call_date": call_doc.call_date,
                         "call_time": call_doc.call_time,
-                        "duration": call_doc.duration
+                        "duration": call_doc.duration,
+                        "recording_url": call_doc.recording_url
                     })
                     existing_record = True
                     break
@@ -139,7 +140,8 @@ def sync_to_lead_history(call_doc):
                     "status": call_doc.status,
                     "call_date": call_doc.call_date,
                     "call_time": call_doc.call_time,
-                    "duration": call_doc.duration
+                    "duration": call_doc.duration,
+                    "recording_url": call_doc.recording_url
                 })
             
             lead_doc.save()
