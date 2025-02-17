@@ -19,14 +19,20 @@ def webhook_call_handler():
             
         agent_number = format_agent_number(call_data.get('answered_agent_number', ''))
         # customer_number = call_data.get("call_to_number", '').replace('+', '') if call_data.get("call_to_number") else ''
-
+        
         # Modified customer number logic based on call direction
         if call_data.get('direction') == 'clicktocall':
             # For outbound calls, call_to_number contains the customer number
-            customer_number = call_data.get("call_to_number", '').replace('+', '').replace('91', '', 1) if call_data.get("call_to_number") else ''
+            customer_number = call_data.get("call_to_number", '').replace('+', '') if call_data.get("call_to_number") else ''
+            # Ensure number starts with 91, but avoid adding it twice
+            if customer_number and not customer_number.startswith('91'):
+                customer_number = '91' + customer_number
         else:
             # For inbound calls, caller_id_number contains the customer number
-            customer_number = call_data.get("caller_id_number", '').replace('+', '').replace('91', '', 1) if call_data.get("caller_id_number") else ''
+            customer_number = call_data.get("caller_id_number", '').replace('+', '') if call_data.get("caller_id_number") else ''
+            # Ensure number starts with 91, but avoid adding it twice
+            if customer_number and not customer_number.startswith('91'):
+                customer_number = '91' + customer_number
 
         frappe.log_error("Webhook data: customer number", customer_number)
         
