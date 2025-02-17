@@ -9,7 +9,7 @@ def webhook_call_handler():
     """Handle incoming webhook data for call records"""
     try:
         call_data = frappe.request.json
-        frappe.call_error(f"Webhook data: {call_data}")
+        # frappe.call_error(f"Webhook data: {call_data}")
         
         # Basic validation
         if not call_data.get('call_id'):
