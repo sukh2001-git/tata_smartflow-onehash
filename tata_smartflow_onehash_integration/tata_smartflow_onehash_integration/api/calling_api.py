@@ -98,107 +98,37 @@ def webhook_call_handler():
             "message": f"Error processing webhook: {str(e)}"
         }
     
-def sync_to_lead_history(call_data):
-    """Sync a single call record to corresponding Lead's calling history"""
-    try:
-        if call_data.get('direction') == 'inbound':
-            customer_number = call_data.get('caller_id_number')
-            if customer_number and not customer_number.startswith('91'):
-                customer_number = '91' + customer_number
-        else:
-            customer_number = call_data.get('call_to_number')
-
-        call_date = None
-        call_time = None
-        if call_data.get('start_stamp'):
-            parts = call_data['start_stamp'].split(' ')
-            if len(parts) == 2:
-                call_date, call_time = parts
-
-        frappe.log_error("call date is", call_date)
-        frappe.log_error("call time is", call_time)
-
-        # Find leads with matching mobile number
-        leads = frappe.get_all(
-            "Lead",
-            filters={"mobile_no": customer_number},
-            fields=["name"]
-        )
-
-        frappe.log_error("in lead sync call history", leads)
-
-        for lead in leads:
-            lead_doc = frappe.get_doc("Lead", lead.name)    
-            frappe.log_error(f"Processing lead {lead.name}", "Lead retrieved")
-
-            if not hasattr(lead_doc, 'calling_history'):
-                frappe.log_error(f"Lead {lead.name} doesn't have calling_history child table", 
-                                     "Child table missing")
-                continue
-            
-            frappe.log_error(f"Lead {lead.name} before update", {
-                    "current_call_status": lead_doc.call_status,
-                    "history_count": len(lead_doc.calling_history) if hasattr(lead_doc, 'calling_history') else 0
-                })
-            
-
-            # Update lead's call status with latest status
-            lead_doc.call_status = call_data.get('call_status')
-            
-            # Check if call record already exists in calling history
-            existing_record = False
-            for history_entry in lead_doc.calling_history:
-                if history_entry.call_id == call_data.get('call_id'):
-                    # Update existing record
-                    history_entry.update({
-                        "agent_name": call_data.get('answered_agent_name'),
-                        "call_type": call_data.get('direction'),
-                        "status": call_data.get('call_status'),
-                        "call_date": call_date,
-                        "call_time": call_time,
-                        "duration": call_data.get('duration'),
-                        "recording_url": call_data.get('recording_url')
-                    })
-                    existing_record = True
-                    frappe.log_error(f"Updated existing history entry for call_id: {call_data.call_id}",
-                                           "History updated")
-                    break
-            
-            # If record doesn't exist, add new entry
-            if not existing_record:
-                lead_doc.append("calling_history", {
-                    "call_id": call_data.get('call_id'),
-                    "agent_name": call_data.get('answered_agent_name'),
-                    "call_type": call_data.get('direction'),
-                    "status": call_data.get('call_status'),
-                    "call_date": call_date,
-                    "call_time": call_time,
-                    "duration": call_data.get('duration'),
-                    "recording_url": call_data.get('recording_url')
-                })
-            
-            lead_doc.save(ignore_permissions=True)
-            frappe.log_error(f"Lead saved, committing transaction")
-            frappe.db.commit()
-            frappe.log_error(f"Transaction committed for lead {lead.name}")
-            
-    except Exception as e:
-        frappe.log_error(f"Error syncing call record to lead history: {str(e)}")
-    
-# def sync_to_lead_history(call_doc):
+# def sync_to_lead_history(call_data):
 #     """Sync a single call record to corresponding Lead's calling history"""
 #     try:
+#         if call_data.get('direction') == 'inbound':
+#             customer_number = call_data.get('caller_id_number')
+#             if customer_number and not customer_number.startswith('91'):
+#                 customer_number = '91' + customer_number
+#         else:
+#             customer_number = call_data.get('call_to_number')
+
+#         call_date = None
+#         call_time = None
+#         if call_data.get('start_stamp'):
+#             parts = call_data['start_stamp'].split(' ')
+#             if len(parts) == 2:
+#                 call_date, call_time = parts
+
+#         frappe.log_error("call date is", call_date)
+#         frappe.log_error("call time is", call_time)
+
 #         # Find leads with matching mobile number
 #         leads = frappe.get_all(
 #             "Lead",
-#             filters={"mobile_no": call_doc.customer_number},
+#             filters={"mobile_no": customer_number},
 #             fields=["name"]
 #         )
 
 #         frappe.log_error("in lead sync call history", leads)
 
 #         for lead in leads:
-#             lead_doc = frappe.get_doc("Lead", lead.name)
+#             lead_doc = frappe.get_doc("Lead", lead.name)    
 #             frappe.log_error(f"Processing lead {lead.name}", "Lead retrieved")
 
 #             if not hasattr(lead_doc, 'calling_history'):
@@ -213,38 +143,38 @@ def sync_to_lead_history(call_data):
             
 
 #             # Update lead's call status with latest status
-#             lead_doc.call_status = call_doc.call_status
+#             lead_doc.call_status = call_data.get('call_status')
             
 #             # Check if call record already exists in calling history
 #             existing_record = False
 #             for history_entry in lead_doc.calling_history:
-#                 if history_entry.call_id == call_doc.call_id:
+#                 if history_entry.call_id == call_data.get('call_id'):
 #                     # Update existing record
 #                     history_entry.update({
-#                         "agent_name": call_doc.agent_name,
-#                         "call_type": call_doc.call_type,
-#                         "status": call_doc.status,
-#                         "call_date": call_doc.call_date,
-#                         "call_time": call_doc.call_time,
-#                         "duration": call_doc.duration,
-#                         "recording_url": call_doc.recording_url
+#                         "agent_name": call_data.get('answered_agent_name'),
+#                         "call_type": call_data.get('direction'),
+#                         "status": call_data.get('call_status'),
+#                         "call_date": call_date,
+#                         "call_time": call_time,
+#                         "duration": call_data.get('duration'),
+#                         "recording_url": call_data.get('recording_url')
 #                     })
 #                     existing_record = True
-#                     frappe.log_error(f"Updated existing history entry for call_id: {call_doc.call_id}",
+#                     frappe.log_error(f"Updated existing history entry for call_id: {call_data.call_id}",
 #                                            "History updated")
 #                     break
             
 #             # If record doesn't exist, add new entry
 #             if not existing_record:
 #                 lead_doc.append("calling_history", {
-#                     "call_id": call_doc.call_id,
-#                     "agent_name": call_doc.agent_name,
-#                     "call_type": call_doc.call_type,
-#                     "status": call_doc.status,
-#                     "call_date": call_doc.call_date,
-#                     "call_time": call_doc.call_time,
-#                     "duration": call_doc.duration,
-#                     "recording_url": call_doc.recording_url
+#                     "call_id": call_data.get('call_id'),
+#                     "agent_name": call_data.get('answered_agent_name'),
+#                     "call_type": call_data.get('direction'),
+#                     "status": call_data.get('call_status'),
+#                     "call_date": call_date,
+#                     "call_time": call_time,
+#                     "duration": call_data.get('duration'),
+#                     "recording_url": call_data.get('recording_url')
 #                 })
             
 #             lead_doc.save(ignore_permissions=True)
@@ -254,6 +184,67 @@ def sync_to_lead_history(call_data):
             
 #     except Exception as e:
 #         frappe.log_error(f"Error syncing call record to lead history: {str(e)}")
+    
+def sync_to_lead_history(call_doc):
+    """Sync a single call record to corresponding Lead's calling history"""
+    try:
+        # Find leads with matching mobile number
+        frappe.log_error(f"call_doc details: {call_doc.name}, type: {type(call_doc)}", "Call Doc Input")
+
+        leads = frappe.get_all(
+            "Lead",
+            filters={"mobile_no": call_doc.customer_number},
+            fields=["name"]
+        )
+
+        frappe.log_error("in lead sync call history", leads)
+
+        for lead in leads:
+            lead_doc = frappe.get_doc("Lead", lead.name)
+            frappe.log_error(f"Processing lead {lead.name}", "Lead retrieved")
+
+            # Update lead's call status with latest status
+            lead_doc.call_status = call_doc.call_status
+            
+            # Check if call record already exists in calling history
+            existing_record = False
+            for history_entry in lead_doc.calling_history:
+                if history_entry.call_id == call_doc.call_id:
+                    # Update existing record
+                    history_entry.update({
+                        "agent_name": call_doc.agent_name,
+                        "call_type": call_doc.call_type,
+                        "status": call_doc.status,
+                        "call_date": call_doc.call_date,
+                        "call_time": call_doc.call_time,
+                        "duration": call_doc.duration,
+                        "recording_url": call_doc.recording_url
+                    })
+                    existing_record = True
+                    frappe.log_error(f"Updated existing history entry for call_id: {call_doc.call_id}",
+                                           "History updated")
+                    break
+            
+            # If record doesn't exist, add new entry
+            if not existing_record:
+                lead_doc.append("calling_history", {
+                    "call_id": call_doc.call_id,
+                    "agent_name": call_doc.agent_name,
+                    "call_type": call_doc.call_type,
+                    "status": call_doc.status,
+                    "call_date": call_doc.call_date,
+                    "call_time": call_doc.call_time,
+                    "duration": call_doc.duration,
+                    "recording_url": call_doc.recording_url
+                })
+            
+            lead_doc.save(ignore_permissions=True)
+            frappe.log_error(f"Lead saved, committing transaction")
+            frappe.db.commit()
+            frappe.log_error(f"Transaction committed for lead {lead.name}")
+            
+    except Exception as e:
+        frappe.log_error(f"Error syncing call record to lead history: {str(e)}")
 
 def get_call_status(call_data):
     """Determine call status based on webhook data"""
