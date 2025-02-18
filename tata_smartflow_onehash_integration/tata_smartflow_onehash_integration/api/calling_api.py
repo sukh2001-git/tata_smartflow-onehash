@@ -170,7 +170,7 @@ def get_call_status(call_data):
     else:
         return 'Failed'
     
-def create_lead_for_missed_call(phone_number):
+def create_lead_for_missed_call(phone_number, call_data=None):
     """Create a new lead for missed calls if it doesn't exist"""
     try:
         frappe.log_error("Starting lead creation for phone", phone_number)
@@ -180,12 +180,18 @@ def create_lead_for_missed_call(phone_number):
         frappe.log_error("Lead exists check result", exists_check)
         
         if phone_number and not exists_check:
+            if call_data:
+                call_status = get_call_status(call_data)
+            else:
+                call_status = "" 
             frappe.log_error("Attempting to create new lead", phone_number)
+
             new_lead = frappe.get_doc({
                 "doctype": "Lead",
                 "first_name": "Student",
                 "source": "Missed Calls",
                 "mobile_no": phone_number,
+                "call_status": call_status,
             })
             frappe.log_error("Lead doc created", new_lead.as_dict())
             
