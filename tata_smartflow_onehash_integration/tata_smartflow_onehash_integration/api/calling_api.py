@@ -112,7 +112,19 @@ def sync_to_lead_history(call_doc):
 
         for lead in leads:
             lead_doc = frappe.get_doc("Lead", lead.name)
+            frappe.log_error(f"Processing lead {lead.name}", "Lead retrieved")
+
+            if not hasattr(lead_doc, 'calling_history'):
+                frappe.log_error(f"Lead {lead.name} doesn't have calling_history child table", 
+                                     "Child table missing")
+                continue
             
+            frappe.log_error(f"Lead {lead.name} before update", {
+                    "current_call_status": lead_doc.call_status,
+                    "history_count": len(lead_doc.calling_history) if hasattr(lead_doc, 'calling_history') else 0
+                })
+            
+
             # Update lead's call status with latest status
             lead_doc.call_status = call_doc.status
             
@@ -131,6 +143,8 @@ def sync_to_lead_history(call_doc):
                         "recording_url": call_doc.recording_url
                     })
                     existing_record = True
+                    frappe.log_error(f"Updated existing history entry for call_id: {call_doc.call_id}",
+                                           "History updated")
                     break
             
             # If record doesn't exist, add new entry
@@ -147,7 +161,9 @@ def sync_to_lead_history(call_doc):
                 })
             
             lead_doc.save(ignore_permissions=True)
+            frappe.log_error(f"Lead saved, committing transaction")
             frappe.db.commit()
+            frappe.log_error(f"Transaction committed for lead {lead.name}")
             
     except Exception as e:
         frappe.log_error(f"Error syncing call record to lead history: {str(e)}")
@@ -177,14 +193,14 @@ def create_lead_for_missed_call(phone_number, call_data=None):
         
         # Add validation logging
         exists_check = frappe.db.exists("Lead", {"mobile_no": phone_number})
-        frappe.log_error("Lead exists check result", exists_check)
+        # frappe.log_error("Lead exists check result", exists_check)
         
         if phone_number and not exists_check:
             if call_data:
                 call_status = get_call_status(call_data)
             else:
                 call_status = "" 
-            frappe.log_error("Attempting to create new lead", phone_number)
+            # frappe.log_error("Attempting to create new lead", phone_number)
 
             new_lead = frappe.get_doc({
                 "doctype": "Lead",
@@ -193,13 +209,13 @@ def create_lead_for_missed_call(phone_number, call_data=None):
                 "mobile_no": phone_number,
                 "call_status": call_status,
             })
-            frappe.log_error("Lead doc created", new_lead.as_dict())
+            # frappe.log_error("Lead doc created", new_lead.as_dict())
             
             # Add explicit commit
             new_lead.insert(ignore_permissions=True)
             frappe.db.commit()
             
-            frappe.log_error("Lead saved successfully", new_lead.name)
+            # frappe.log_error("Lead saved successfully", new_lead.name)
         else:
             frappe.log_error("Skipping lead creation - either no phone or lead exists", 
                            f"Phone: {phone_number}, Exists: {exists_check}")
