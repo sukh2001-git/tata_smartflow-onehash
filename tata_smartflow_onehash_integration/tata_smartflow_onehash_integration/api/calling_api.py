@@ -148,7 +148,7 @@ def sync_to_lead_history(call_data):
             # Check if call record already exists in calling history
             existing_record = False
             for history_entry in lead_doc.calling_history:
-                if history_entry.call_id == call_data.call_id:
+                if history_entry.call_id == call_data.get('call_id'):
                     # Update existing record
                     history_entry.update({
                         "agent_name": call_data.get('answered_agent_name'),
