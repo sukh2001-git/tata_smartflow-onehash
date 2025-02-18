@@ -108,6 +108,8 @@ def sync_to_lead_history(call_doc):
             fields=["name"]
         )
 
+        frappe.log_error("in lead sync call history", leads)
+
         for lead in leads:
             lead_doc = frappe.get_doc("Lead", lead.name)
             
@@ -144,7 +146,7 @@ def sync_to_lead_history(call_doc):
                     "recording_url": call_doc.recording_url
                 })
             
-            lead_doc.save()
+            lead_doc.save(ignore_permissions=True)
             frappe.db.commit()
             
     except Exception as e:
