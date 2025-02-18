@@ -98,92 +98,6 @@ def webhook_call_handler():
             "message": f"Error processing webhook: {str(e)}"
         }
     
-# def sync_to_lead_history(call_data):
-#     """Sync a single call record to corresponding Lead's calling history"""
-#     try:
-#         if call_data.get('direction') == 'inbound':
-#             customer_number = call_data.get('caller_id_number')
-#             if customer_number and not customer_number.startswith('91'):
-#                 customer_number = '91' + customer_number
-#         else:
-#             customer_number = call_data.get('call_to_number')
-
-#         call_date = None
-#         call_time = None
-#         if call_data.get('start_stamp'):
-#             parts = call_data['start_stamp'].split(' ')
-#             if len(parts) == 2:
-#                 call_date, call_time = parts
-
-#         frappe.log_error("call date is", call_date)
-#         frappe.log_error("call time is", call_time)
-
-#         # Find leads with matching mobile number
-#         leads = frappe.get_all(
-#             "Lead",
-#             filters={"mobile_no": customer_number},
-#             fields=["name"]
-#         )
-
-#         frappe.log_error("in lead sync call history", leads)
-
-#         for lead in leads:
-#             lead_doc = frappe.get_doc("Lead", lead.name)    
-#             frappe.log_error(f"Processing lead {lead.name}", "Lead retrieved")
-
-#             if not hasattr(lead_doc, 'calling_history'):
-#                 frappe.log_error(f"Lead {lead.name} doesn't have calling_history child table", 
-#                                      "Child table missing")
-#                 continue
-            
-#             frappe.log_error(f"Lead {lead.name} before update", {
-#                     "current_call_status": lead_doc.call_status,
-#                     "history_count": len(lead_doc.calling_history) if hasattr(lead_doc, 'calling_history') else 0
-#                 })
-            
-
-#             # Update lead's call status with latest status
-#             lead_doc.call_status = call_data.get('call_status')
-            
-#             # Check if call record already exists in calling history
-#             existing_record = False
-#             for history_entry in lead_doc.calling_history:
-#                 if history_entry.call_id == call_data.get('call_id'):
-#                     # Update existing record
-#                     history_entry.update({
-#                         "agent_name": call_data.get('answered_agent_name'),
-#                         "call_type": call_data.get('direction'),
-#                         "status": call_data.get('call_status'),
-#                         "call_date": call_date,
-#                         "call_time": call_time,
-#                         "duration": call_data.get('duration'),
-#                         "recording_url": call_data.get('recording_url')
-#                     })
-#                     existing_record = True
-#                     frappe.log_error(f"Updated existing history entry for call_id: {call_data.call_id}",
-#                                            "History updated")
-#                     break
-            
-#             # If record doesn't exist, add new entry
-#             if not existing_record:
-#                 lead_doc.append("calling_history", {
-#                     "call_id": call_data.get('call_id'),
-#                     "agent_name": call_data.get('answered_agent_name'),
-#                     "call_type": call_data.get('direction'),
-#                     "status": call_data.get('call_status'),
-#                     "call_date": call_date,
-#                     "call_time": call_time,
-#                     "duration": call_data.get('duration'),
-#                     "recording_url": call_data.get('recording_url')
-#                 })
-            
-#             lead_doc.save(ignore_permissions=True)
-#             frappe.log_error(f"Lead saved, committing transaction")
-#             frappe.db.commit()
-#             frappe.log_error(f"Transaction committed for lead {lead.name}")
-            
-#     except Exception as e:
-#         frappe.log_error(f"Error syncing call record to lead history: {str(e)}")
     
 def sync_to_lead_history(call_doc):
     """Sync a single call record to corresponding Lead's calling history"""
@@ -271,14 +185,14 @@ def create_lead_for_missed_call(phone_number, call_data=None):
         
         # Add validation logging
         exists_check = frappe.db.exists("Lead", {"mobile_no": phone_number})
-        # frappe.log_error("Lead exists check result", exists_check)
         
         if phone_number and not exists_check:
             if call_data:
                 call_status = get_call_status(call_data)
             else:
                 call_status = "" 
-            # frappe.log_error("Attempting to create new lead", phone_number)
+            
+            frappe.log_error("call status is", call_status)
 
             new_lead = frappe.get_doc({
                 "doctype": "Lead",
@@ -300,21 +214,6 @@ def create_lead_for_missed_call(phone_number, call_data=None):
     except Exception as e:
         frappe.log_error(f"Error creating lead for missed call: {str(e)}\n{frappe.get_traceback()}")
 
-# def create_lead_for_missed_call(phone_number):
-#     """Create a new lead for missed calls if it doesn't exist"""
-#     try:
-#         frappe.log_error("phone no is", phone_number)
-#         if phone_number and not frappe.db.exists("Lead", {"mobile_no": phone_number}):
-#             new_lead = frappe.get_doc({
-#                 "doctype": "Lead",
-#                 "first_name": "Student",
-#                 "source": "Missed Calls",
-#                 "mobile_no": phone_number
-#             })
-#             frappe.log_error("new_lead", new_lead)
-#             new_lead.save(ignore_permissions=True)
-#     except Exception as e:
-#         frappe.log_error(f"Error creating lead for missed call: {str(e)}")
 
 def format_agent_number(phone_number):
     """Format agent phone number by removing +91 prefix"""
