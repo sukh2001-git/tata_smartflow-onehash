@@ -114,11 +114,8 @@ def sync_to_lead_history(call_doc):
             fields=["name"]
         )
 
-        frappe.log_error("in lead sync call history", leads)
-
         for lead in leads:
             lead_doc = frappe.get_doc("Lead", lead.name)
-            frappe.log_error(f"Processing lead {lead.name}", "Lead retrieved")
 
             # Update lead's call status with latest status
             lead_doc.call_status = call_doc.call_status
@@ -138,8 +135,6 @@ def sync_to_lead_history(call_doc):
                         "recording_url": call_doc.recording_url
                     })
                     existing_record = True
-                    frappe.log_error(f"Updated existing history entry for call_id: {call_doc.call_id}",
-                                           "History updated")
                     break
             
             # If record doesn't exist, add new entry
@@ -156,7 +151,6 @@ def sync_to_lead_history(call_doc):
                 })
             
             lead_doc.save(ignore_permissions=True)
-            frappe.db.commit()
             frappe.log_error(f"Transaction committed for lead {lead.name}")
             
     except Exception as e:
