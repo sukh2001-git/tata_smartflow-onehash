@@ -68,7 +68,7 @@ def webhook_call_handler():
             
             # Create lead for missed inbound calls
             if call_doc.call_type == "Inbound":
-                create_lead_for_missed_call(customer_number)
+                create_lead_for_missed_call(customer_number, call_data)
 
             # Handle missed agents if present
             if call_data.get('missed_agent') and isinstance(call_data['missed_agent'], list):
