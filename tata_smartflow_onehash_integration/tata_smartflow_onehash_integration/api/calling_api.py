@@ -9,7 +9,7 @@ def webhook_call_handler():
     """Handle incoming webhook data for call records"""
     try:
         call_data = frappe.request.json
-        # frappe.call_error(f"Webhook data: {call_data}")
+        frappe.log_error(f"Webhook data", call_data)
         
         # Basic validation
         if not call_data.get('call_id'):
@@ -171,6 +171,7 @@ def get_call_status(call_data):
 def create_lead_for_missed_call(phone_number):
     """Create a new lead for missed calls if it doesn't exist"""
     try:
+        frappe.log_error("phone no is", phone_number)
         if phone_number and not frappe.db.exists("Lead", {"mobile_no": phone_number}):
             new_lead = frappe.get_doc({
                 "doctype": "Lead",
@@ -178,6 +179,7 @@ def create_lead_for_missed_call(phone_number):
                 "source": "Missed Calls",
                 "mobile_no": phone_number
             })
+            frappe.log_error("new_lead", new_lead)
             new_lead.save(ignore_permissions=True)
     except Exception as e:
         frappe.log_error(f"Error creating lead for missed call: {str(e)}")
