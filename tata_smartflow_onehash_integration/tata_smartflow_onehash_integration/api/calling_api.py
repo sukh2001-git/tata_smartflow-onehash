@@ -84,7 +84,7 @@ def webhook_call_handler():
             if call_data.get('call_flow'):
                 insert_hangup_records(call_doc.name, call_data['call_flow'])
 
-            sync_to_lead_history(call_doc)
+        sync_to_lead_history(call_doc)
 
         return {
             "success": True,
@@ -197,7 +197,7 @@ def create_lead_for_missed_call(phone_number, call_data=None):
             new_lead = frappe.get_doc({
                 "doctype": "Lead",
                 "first_name": "Student",
-                "source": "Missed Calls",
+                "source": "IVR Lead",
                 "mobile_no": phone_number,
                 "call_status": call_status,
             })
