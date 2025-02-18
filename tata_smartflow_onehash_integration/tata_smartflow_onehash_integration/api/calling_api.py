@@ -167,22 +167,52 @@ def get_call_status(call_data):
         return 'Answered'
     else:
         return 'Failed'
-
+    
 def create_lead_for_missed_call(phone_number):
     """Create a new lead for missed calls if it doesn't exist"""
     try:
-        frappe.log_error("phone no is", phone_number)
-        if phone_number and not frappe.db.exists("Lead", {"mobile_no": phone_number}):
+        frappe.log_error("Starting lead creation for phone", phone_number)
+        
+        # Add validation logging
+        exists_check = frappe.db.exists("Lead", {"mobile_no": phone_number})
+        frappe.log_error("Lead exists check result", exists_check)
+        
+        if phone_number and not exists_check:
+            frappe.log_error("Attempting to create new lead", phone_number)
             new_lead = frappe.get_doc({
                 "doctype": "Lead",
                 "first_name": "Student",
                 "source": "Missed Calls",
-                "mobile_no": phone_number
+                "mobile_no": phone_number,
             })
-            frappe.log_error("new_lead", new_lead)
-            new_lead.save(ignore_permissions=True)
+            frappe.log_error("Lead doc created", new_lead.as_dict())
+            
+            # Add explicit commit
+            new_lead.insert(ignore_permissions=True)
+            frappe.db.commit()
+            
+            frappe.log_error("Lead saved successfully", new_lead.name)
+        else:
+            frappe.log_error("Skipping lead creation - either no phone or lead exists", 
+                           f"Phone: {phone_number}, Exists: {exists_check}")
     except Exception as e:
-        frappe.log_error(f"Error creating lead for missed call: {str(e)}")
+        frappe.log_error(f"Error creating lead for missed call: {str(e)}\n{frappe.get_traceback()}")
+
+# def create_lead_for_missed_call(phone_number):
+#     """Create a new lead for missed calls if it doesn't exist"""
+#     try:
+#         frappe.log_error("phone no is", phone_number)
+#         if phone_number and not frappe.db.exists("Lead", {"mobile_no": phone_number}):
+#             new_lead = frappe.get_doc({
+#                 "doctype": "Lead",
+#                 "first_name": "Student",
+#                 "source": "Missed Calls",
+#                 "mobile_no": phone_number
+#             })
+#             frappe.log_error("new_lead", new_lead)
+#             new_lead.save(ignore_permissions=True)
+#     except Exception as e:
+#         frappe.log_error(f"Error creating lead for missed call: {str(e)}")
 
 def format_agent_number(phone_number):
     """Format agent phone number by removing +91 prefix"""
