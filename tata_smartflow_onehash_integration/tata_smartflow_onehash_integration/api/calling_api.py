@@ -55,11 +55,12 @@ def webhook_call_handler():
         })
 
         # Check for existing call log
-        existing_log = frappe.get_all(
-            "Tata Tele Call Logs",
-            filters={"call_id": call_data.get('call_id')},
-            limit=1
-        )
+        # existing_log = frappe.get_all(
+        #     "Tata Tele Call Logs",
+        #     filters={"call_id": call_data.get('call_id')},
+        #     limit=1
+        # )
+        existing_log = frappe.db.exists("Tata Tele Call Logs", {"call_id": call_data.get('call_id')})
 
         if existing_log:
             frappe.log_error(f"Call log already exists for call_id: {call_data.get('call_id')}")
@@ -84,6 +85,8 @@ def webhook_call_handler():
             if call_data.get('call_flow'):
                 insert_hangup_records(call_doc.name, call_data['call_flow'])
 
+            frappe.db.commit()
+        
         sync_to_lead_history(call_doc)
 
         return {
@@ -105,7 +108,7 @@ def sync_to_lead_history(call_doc):
         # Find leads with matching mobile number
         frappe.log_error(f"call_doc details: {call_doc.name}, type: {type(call_doc)}", "Call Doc Input")
 
-        leads = frappe.get_all(
+        leads = frappe.db.get_list(
             "Lead",
             filters={"mobile_no": call_doc.customer_number},
             fields=["name"]
@@ -153,7 +156,6 @@ def sync_to_lead_history(call_doc):
                 })
             
             lead_doc.save(ignore_permissions=True)
-            frappe.log_error(f"Lead saved, committing transaction")
             frappe.db.commit()
             frappe.log_error(f"Transaction committed for lead {lead.name}")
             
