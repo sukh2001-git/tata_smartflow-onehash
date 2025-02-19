@@ -792,15 +792,26 @@ def handle_inbound_call():
         
         last_ten_digits = clean_number[-10:] if len(clean_number) >= 10 else clean_number
         
-        frappe.log_error("Searching for number patterns", 
-                         f"Original: {caller_number}, Last 10 digits: {last_ten_digits}")
+        # frappe.log_error("Searching for number patterns", 
+        #                  f"Original: {caller_number}, Last 10 digits: {last_ten_digits}")
         
+        formatted_number = f"91{last_ten_digits}" if len(last_ten_digits) == 10 else clean_number
+        
+        frappe.log_error("Searching for number", formatted_number)
+        
+        # leads = frappe.get_list("Lead", 
+        #     filters=[
+        #         ["mobile_no", "=", caller_number] | 
+        #         ["mobile_no", "=", clean_number] | 
+        #         ["mobile_no", "=", last_ten_digits] | 
+        #         ["mobile_no", "like", f"%{last_ten_digits}"]
+        #     ],
+        #     fields=["name", "first_name", "mobile_no"]
+        # )
+
         leads = frappe.get_list("Lead", 
             filters=[
-                ["mobile_no", "=", caller_number] | 
-                ["mobile_no", "=", clean_number] | 
-                ["mobile_no", "=", last_ten_digits] | 
-                ["mobile_no", "like", f"%{last_ten_digits}"]
+                ["mobile_no", "like", formatted_number]
             ],
             fields=["name", "first_name", "mobile_no"]
         )

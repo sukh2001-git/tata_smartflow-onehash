@@ -24,6 +24,10 @@ frappe.tatatele.CallPopupHandler = class CallPopupHandler {
 
         this.activeCall = data;
 
+        // Fix: Variables not defined in template string
+        const callerNumber = data.caller_number || 'N/A';
+        const leadNumber = data.lead_number || 'N/A';
+
         this.dialog = new frappe.ui.Dialog({
             title: 'Incoming Call',
             indicator: 'green',
@@ -35,14 +39,19 @@ frappe.tatatele.CallPopupHandler = class CallPopupHandler {
                         <div class="call-popup-content">
                             <div class="call-info-row">
                                 <span class="call-label">Caller Number:</span>
-                                <span class="call-value">${data.caller_number || 'Unknown'}</span>
+                                <span class="call-value">${callerNumber}</span>
                             </div>
+                            ${data.lead_number ? `
+                            <div class="call-info-row">
+                                <span class="call-label">Lead Number:</span>
+                                <span class="call-value">${leadNumber}</span>
+                            </div>` : ''}
                             <div class="call-info-row">
                                 <span class="call-label">Lead Name:</span>
                                 <span class="call-value">${data.lead_name || 'Unknown'}</span>
                             </div>
                             <div class="view-details-row">
-                                <button class="btn btn-sm btn-default view-lead-btn">
+                                <button class="btn btn-sm btn-default view-lead-btn" ${!data.lead_id ? 'disabled' : ''}>
                                     View Lead Details
                                 </button>
                             </div>
@@ -52,6 +61,7 @@ frappe.tatatele.CallPopupHandler = class CallPopupHandler {
             ],
             onhide: () => {
                 this.stopNotificationSound();
+                this.activeCall = null; // Reset activeCall when dialog is hidden
             }
         });
 
@@ -98,7 +108,9 @@ frappe.tatatele.CallPopupHandler = class CallPopupHandler {
             this.stopNotificationSound(); // Stop any existing sound first
             this.audio = new Audio('/assets/tata_smartflow_onehash_integration/sounds/notification-19-270138.mp3');
             this.audio.loop = true; // Make the sound loop
-            this.audio.play();
+            this.audio.play().catch(e => {
+                console.error('Failed to play notification sound:', e);
+            });
         } catch (e) {
             console.error('Failed to play notification sound:', e);
         }
@@ -114,7 +126,7 @@ frappe.tatatele.CallPopupHandler = class CallPopupHandler {
 }
 
 // Initialize the handler when Frappe is ready
-$(document).ready(function() {
+$(document).ready(function () {
     window.call_popup_handler = new frappe.tatatele.CallPopupHandler();
 });
 
