@@ -1,6 +1,7 @@
 import frappe
 import http.client
 import json
+import re
 from frappe import _
 from frappe.utils import now
 
@@ -35,14 +36,14 @@ def webhook_call_handler():
             if customer_number and not customer_number.startswith('91'):
                 customer_number = '91' + customer_number
 
-        # frappe.log_error("Webhook data: customer number", customer_number)
+        frappe.log_error("formatted agent name", format_agent_name(call_data.get('answered_agent_name')))
         
         # Create the call log entry
         call_doc = frappe.get_doc({
             "doctype": "Tata Tele Call Logs",
             "uuid": call_data.get('uuid'),
             "call_id": call_data.get('call_id'),
-            "agent_name": call_data.get('answered_agent_name'),
+            "agent_name": format_agent_name(call_data.get('answered_agent_name')),
             "call_type": "Outbound" if call_data.get('direction') == 'clicktocall' else "Inbound",
             "call_date": call_data.get('start_stamp', '').split(' ')[0] if call_data.get('start_stamp') else now(),
             "call_time": call_data.get('start_stamp', '').split(' ')[1] if call_data.get('start_stamp') else now(),
@@ -76,7 +77,7 @@ def webhook_call_handler():
                 missed_agents = []
                 for agent in call_data['missed_agent']:
                     missed_agents.append({
-                        "agent_name": agent.get('name'),
+                        "agent_name": format_agent_name(agent.get('name')),
                         "number": format_agent_number(agent.get('number'))
                     })
                 insert_missed_agents(call_doc.name, missed_agents)
@@ -126,7 +127,7 @@ def sync_to_lead_history(call_doc):
                 if history_entry.call_id == call_doc.call_id:
                     # Update existing record
                     history_entry.update({
-                        "agent_name": call_doc.agent_name,
+                        "agent_name": format_agent_name(call_doc.agent_name),
                         "call_type": call_doc.call_type,
                         "status": call_doc.status,
                         "call_date": call_doc.call_date,
@@ -140,7 +141,7 @@ def sync_to_lead_history(call_doc):
             if not existing_record:
                 lead_doc.append("calling_history", {
                     "call_id": call_doc.call_id,
-                    "agent_name": call_doc.agent_name,
+                    "agent_name": format_agent_name(call_doc.agent_name),
                     "call_type": call_doc.call_type,
                     "status": call_doc.status,
                     "call_date": call_doc.call_date,
@@ -171,6 +172,18 @@ def get_call_status(call_data):
         return 'Answered'
     else:
         return 'Failed'
+
+@frappe.whitelist(allow_guest=True)  
+def format_agent_name(agent_name):
+    if not agent_name:
+        return agent_name
+
+    # Use regex to extract 'Agent X' pattern
+    match = re.match(r'^(Agent)\s*(\d+)', agent_name, re.IGNORECASE)
+    if match:
+        return f"{match.group(1)} {match.group(2)}"
+
+    return agent_name
     
 def create_lead_for_missed_call(phone_number, call_data=None):
     """Create a new lead for missed calls if it doesn't exist"""
@@ -229,7 +242,7 @@ def insert_missed_agents(call_log_name, missed_agents):
         
         for agent in missed_agents:
             call_doc.append("missed_agents", {
-                "agent_name": agent["agent_name"],
+                "agent_name": format_agent_name(agent["agent_name"]),
                 "number": format_agent_number(agent.get("agent_number") or agent.get("number"))
             })
         
@@ -246,7 +259,7 @@ def insert_hangup_records(call_log_name, call_flow):
         for flow in call_flow:
             call_doc.append("hang_up_call_records", {
                 "id": flow.get("id"),
-                "agent_name": flow.get("name"),
+                "agent_name": format_agent_name(flow.get("name")),
                 "disposition": flow.get("dialst"),
                 "hangup_time": flow.get('time')
             })
