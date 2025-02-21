@@ -39,15 +39,10 @@ function fetch_users(listview) {
                     }, 1000);
                 } else if (response.message.message === "No users found in the API response") {
                     frappe.show_alert({
-                        message: __("No users found in the API response."),
+                        message: __("All existing users skipped. No new users were fetched."),
                         indicator: "orange"
                     });
-                } else {
-                    frappe.show_alert({
-                        message: __("No new users were fetched."),
-                        indicator: "orange"
-                    });
-                }
+                } 
             } else {
                 frappe.show_alert({
                     message: __("Failed to fetch users: {0}", [response.message.message]),
