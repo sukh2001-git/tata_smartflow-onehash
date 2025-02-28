@@ -10,7 +10,6 @@ def webhook_call_handler():
     """Handle incoming webhook data for call records"""
     try:
         call_data = frappe.request.json
-        frappe.log_error(f"Webhook data", call_data)
         
         # Basic validation
         if not call_data.get('call_id'):
@@ -148,7 +147,7 @@ def sync_to_lead_history(call_doc):
             lead_doc.save(ignore_permissions=True)
             
     except Exception as e:
-        frappe.log_error(f"Error syncing call record to lead history: {str(e)}")
+        pass
 
 def get_call_status(call_data):
     """Determine call status based on webhook data"""
@@ -206,8 +205,7 @@ def create_lead_for_missed_call(phone_number, call_data=None):
             frappe.db.commit()
     
         else:
-            frappe.log_error("Skipping lead creation - either no phone or lead exists", 
-                           f"Phone: {phone_number}, Exists: {exists_check}")
+            frappe.logger(f"Skipping lead creation - either no phone or lead exists | Phone: {phone_number}, Exists: {exists_check}")
     except Exception as e:
         frappe.log_error(f"Error creating lead for missed call: {str(e)}\n{frappe.get_traceback()}")
 
@@ -785,7 +783,6 @@ def handle_inbound_call():
             frappe.throw(_("No data received"))
             
         data = json.loads(frappe.request.data)
-        frappe.log_error("inbound call data", data)
         
         # Get settings
         settings = frappe.get_single("Tata Tele API Cloud Settings")
@@ -831,8 +828,6 @@ def handle_inbound_call():
             ],
             fields=["name", "first_name", "mobile_no"]
         )
-        
-        frappe.log_error("Matching leads", leads)
         
         if leads:
             lead = leads[0]  # Get first matching lead
