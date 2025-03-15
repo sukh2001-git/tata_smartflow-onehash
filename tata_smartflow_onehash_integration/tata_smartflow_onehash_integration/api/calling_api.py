@@ -25,15 +25,13 @@ def webhook_call_handler():
         if call_data.get('direction') == 'clicktocall':
             # For outbound calls, call_to_number contains the customer number
             customer_number = call_data.get("call_to_number", '').replace('+', '') if call_data.get("call_to_number") else ''
-            # Ensure number starts with 91, but avoid adding it twice
-            if customer_number and not customer_number.startswith('91'):
-                customer_number = '91' + customer_number
         else:
             # For inbound calls, caller_id_number contains the customer number
             customer_number = call_data.get("caller_id_number", '').replace('+', '') if call_data.get("caller_id_number") else ''
-            # Ensure number starts with 91, but avoid adding it twice
-            if customer_number and not customer_number.startswith('91'):
-                customer_number = '91' + customer_number
+
+        # Ensure number starts with 91, but avoid adding it twice
+        if customer_number and len(customer_number) == 10:
+            customer_number = '91' + customer_number
         
         # Create the call log entry
         call_doc = frappe.get_doc({
