@@ -1,0 +1,46 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-03-12 16:12:52.688160",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "last_seen_id",
+  "last_updated"
+ ],
+ "fields": [
+  {
+   "fieldname": "last_seen_id",
+   "fieldtype": "Int",
+   "label": "Last Seen ID"
+  },
+  {
+   "fieldname": "last_updated",
+   "fieldtype": "Datetime",
+   "label": "Last Updated"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-03-12 16:13:15.962316",
+ "modified_by": "Administrator",
+ "module": "Tata Smartflow Onehash Integration",
+ "name": "Tata Tele API Calling Tracker",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

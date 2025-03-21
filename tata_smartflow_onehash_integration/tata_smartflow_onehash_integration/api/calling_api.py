@@ -861,7 +861,6 @@ def handle_inbound_call():
         }
             
     except Exception as e:
-        frappe.logger().error(f"Inbound lead call error: {str(e)}")
         return {
             "success": False,
             "message": f"Failed to process inbound call: {str(e)}"
