@@ -3,7 +3,7 @@ frappe.provide('frappe.tatatele');
 frappe.tatatele.CallPopupHandler = class CallPopupHandler {
     constructor() {
         this.activeCall = null;
-        this.audio = null;
+        // this.audio = null;
         this.bindEvents();
     }
 
@@ -19,7 +19,7 @@ frappe.tatatele.CallPopupHandler = class CallPopupHandler {
     showCallPopup(data) {
         if (this.dialog) {
             this.dialog.hide();
-            this.stopNotificationSound();
+            // this.stopNotificationSound();
         }
 
         this.activeCall = data;
@@ -60,7 +60,7 @@ frappe.tatatele.CallPopupHandler = class CallPopupHandler {
                 }
             ],
             onhide: () => {
-                this.stopNotificationSound();
+                // this.stopNotificationSound();
                 this.activeCall = null; // Reset activeCall when dialog is hidden
             }
         });
@@ -88,7 +88,7 @@ frappe.tatatele.CallPopupHandler = class CallPopupHandler {
         // Bind click event for view details button
         this.dialog.$wrapper.find('.view-lead-btn').on('click', () => {
             if (data.lead_id) {
-                this.stopNotificationSound();
+                // this.stopNotificationSound();
                 frappe.set_route('Form', 'Lead', data.lead_id);
                 this.dialog.hide();
             } else {
@@ -100,29 +100,29 @@ frappe.tatatele.CallPopupHandler = class CallPopupHandler {
         });
 
         this.dialog.show();
-        this.playNotificationSound();
+        // this.playNotificationSound();
     }
 
-    playNotificationSound() {
-        try {
-            this.stopNotificationSound(); // Stop any existing sound first
-            this.audio = new Audio('/assets/tata_smartflow_onehash_integration/sounds/notification-19-270138.mp3');
-            this.audio.loop = true; // Make the sound loop
-            this.audio.play().catch(e => {
-                console.error('Failed to play notification sound:', e);
-            });
-        } catch (e) {
-            console.error('Failed to play notification sound:', e);
-        }
-    }
+    // playNotificationSound() {
+    //     try {
+    //         this.stopNotificationSound(); // Stop any existing sound first
+    //         this.audio = new Audio('/assets/tata_smartflow_onehash_integration/sounds/notification-19-270138.mp3');
+    //         this.audio.loop = true; // Make the sound loop
+    //         this.audio.play().catch(e => {
+    //             console.error('Failed to play notification sound:', e);
+    //         });
+    //     } catch (e) {
+    //         console.error('Failed to play notification sound:', e);
+    //     }
+    // }
 
-    stopNotificationSound() {
-        if (this.audio) {
-            this.audio.pause();
-            this.audio.currentTime = 0;
-            this.audio = null;
-        }
-    }
+    // stopNotificationSound() {
+    //     if (this.audio) {
+    //         this.audio.pause();
+    //         this.audio.currentTime = 0;
+    //         this.audio = null;
+    //     }
+    // }
 }
 
 // Initialize the handler when Frappe is ready
