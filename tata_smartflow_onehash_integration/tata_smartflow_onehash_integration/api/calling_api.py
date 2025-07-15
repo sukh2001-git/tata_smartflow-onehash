@@ -203,7 +203,8 @@ def create_lead_for_missed_call(phone_number, call_data=None):
             frappe.db.commit()
     
         else:
-            frappe.logger(f"Skipping lead creation - either no phone or lead exists | Phone: {phone_number}, Exists: {exists_check}")
+            # frappe.logger(f"Skipping lead creation - either no phone or lead exists | Phone: {phone_number}, Exists: {exists_check}")
+            pass
     except Exception as e:
         frappe.log_error(f"Error creating lead for missed call: {str(e)}\n{frappe.get_traceback()}")
 
